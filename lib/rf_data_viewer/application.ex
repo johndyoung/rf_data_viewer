@@ -13,7 +13,7 @@ defmodule RFDataViewer.Application do
       {DNSCluster, query: Application.get_env(:rf_data_viewer, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: RFDataViewer.PubSub},
       # Start the Finch HTTP client for sending emails
-      # {Finch, name: RFDataViewer.Finch},
+      {Finch, name: RFDataViewer.Finch},
       # Start a worker by calling: RFDataViewer.Worker.start_link(arg)
       # {RFDataViewer.Worker, arg},
       # Start to serve requests, typically the last entry
