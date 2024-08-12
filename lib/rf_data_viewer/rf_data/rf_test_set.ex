@@ -7,8 +7,8 @@ defmodule RFDataViewer.RFData.RFTestSet do
     field :date, :utc_datetime
     field :description, :string
     field :location, :string
-    belongs_to :rf_unit_serial_numbers, RFDataViewer.RFUnits.RFUnitSerialNumber
-    has_many :rf_data_set, RFDataViewer.RFData.RFTestSet
+    belongs_to :rf_unit_serial_numbers, RFDataViewer.RFUnits.RFUnitSerialNumber, foreign_key: :rf_unit_serial_number_id
+    has_many :rf_data_set, RFDataViewer.RFData.RFDataSet
 
     timestamps(type: :utc_datetime)
   end

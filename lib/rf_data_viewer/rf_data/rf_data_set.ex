@@ -8,6 +8,7 @@ defmodule RFDataViewer.RFData.RFDataSet do
     field :description, :string
     belongs_to :rf_test_set, RFDataViewer.RFData.RFTestSet
     has_many :rf_gain, RFDataViewer.RFData.RFGain
+    has_many :rf_vswr, RFDataViewer.RFData.RFVswr
 
     timestamps(type: :utc_datetime)
   end

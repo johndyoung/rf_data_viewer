@@ -52,7 +52,7 @@ defmodule RFDataViewer.RFData do
   """
   def create_rf_test_set(%RFUnitSerialNumber{} = rf_unit_serial_number, attrs \\ %{}) do
     rf_unit_serial_number
-    |> Ecto.build_assoc(:rf_unit_serial_numbers)
+    |> Ecto.build_assoc(:rf_test_set)
     |> RFTestSet.changeset(attrs)
     |> Repo.insert()
   end
@@ -148,8 +148,11 @@ defmodule RFDataViewer.RFData do
 
   """
   def create_rf_data_set(%RFTestSet{} = rf_test_set, attrs \\ %{}) do
+    %RFDataSet{}
+    |> IO.inspect()
+
     rf_test_set
-    |> Ecto.build_assoc(:rf_test_set)
+    |> Ecto.build_assoc(:rf_data_set)
     |> RFDataSet.changeset(attrs)
     |> Repo.insert()
   end
@@ -246,7 +249,7 @@ defmodule RFDataViewer.RFData do
   """
   def create_rf_gain(%RFDataSet{} = rf_data_set, attrs \\ %{}) do
     rf_data_set
-    |> Ecto.build_assoc(:rf_data_set)
+    |> Ecto.build_assoc(:rf_gain)
     |> RFGain.changeset(attrs)
     |> Repo.insert()
   end
@@ -343,7 +346,7 @@ defmodule RFDataViewer.RFData do
   """
   def create_rf_vswr(%RFDataSet{} = rf_data_set, attrs \\ %{}) do
     rf_data_set
-    |> Ecto.build_assoc(:rf_data_set)
+    |> Ecto.build_assoc(:rf_vswr)
     |> RFVswr.changeset(attrs)
     |> Repo.insert()
   end

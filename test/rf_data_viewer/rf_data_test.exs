@@ -21,9 +21,10 @@ defmodule RFDataViewer.RFDataTest do
     end
 
     test "create_rf_test_set/1 with valid data creates a rf_test_set" do
+      rf_sn = RFDataViewer.RFUnitsFixtures.rf_unit_serial_number_fixture()
       valid_attrs = %{name: "some name", date: ~U[2024-08-11 00:57:00Z], description: "some description", location: "some location"}
 
-      assert {:ok, %RFTestSet{} = rf_test_set} = RFData.create_rf_test_set(valid_attrs)
+      assert {:ok, %RFTestSet{} = rf_test_set} = RFData.create_rf_test_set(rf_sn, valid_attrs)
       assert rf_test_set.name == "some name"
       assert rf_test_set.date == ~U[2024-08-11 00:57:00Z]
       assert rf_test_set.description == "some description"
@@ -31,7 +32,8 @@ defmodule RFDataViewer.RFDataTest do
     end
 
     test "create_rf_test_set/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = RFData.create_rf_test_set(@invalid_attrs)
+      rf_sn = RFDataViewer.RFUnitsFixtures.rf_unit_serial_number_fixture()
+      assert {:error, %Ecto.Changeset{}} = RFData.create_rf_test_set(rf_sn, @invalid_attrs)
     end
 
     test "update_rf_test_set/2 with valid data updates the rf_test_set" do
@@ -81,16 +83,18 @@ defmodule RFDataViewer.RFDataTest do
     end
 
     test "create_rf_data_set/1 with valid data creates a rf_data_set" do
+      rf_test_set = RFDataViewer.RFDataFixtures.rf_test_set_fixture()
       valid_attrs = %{name: "some name", date: ~U[2024-08-11 01:05:00Z], description: "some description"}
 
-      assert {:ok, %RFDataSet{} = rf_data_set} = RFData.create_rf_data_set(valid_attrs)
+      assert {:ok, %RFDataSet{} = rf_data_set} = RFData.create_rf_data_set(rf_test_set, valid_attrs)
       assert rf_data_set.name == "some name"
       assert rf_data_set.date == ~U[2024-08-11 01:05:00Z]
       assert rf_data_set.description == "some description"
     end
 
     test "create_rf_data_set/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = RFData.create_rf_data_set(@invalid_attrs)
+      rf_test_set = RFDataViewer.RFDataFixtures.rf_test_set_fixture()
+      assert {:error, %Ecto.Changeset{}} = RFData.create_rf_data_set(rf_test_set, @invalid_attrs)
     end
 
     test "update_rf_data_set/2 with valid data updates the rf_data_set" do
@@ -139,15 +143,17 @@ defmodule RFDataViewer.RFDataTest do
     end
 
     test "create_rf_gain/1 with valid data creates a rf_gain" do
+      rf_data_set = RFDataViewer.RFDataFixtures.rf_data_set_fixture()
       valid_attrs = %{frequency: 42, gain: 120.5}
 
-      assert {:ok, %RFGain{} = rf_gain} = RFData.create_rf_gain(valid_attrs)
+      assert {:ok, %RFGain{} = rf_gain} = RFData.create_rf_gain(rf_data_set, valid_attrs)
       assert rf_gain.frequency == 42
       assert rf_gain.gain == 120.5
     end
 
     test "create_rf_gain/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = RFData.create_rf_gain(@invalid_attrs)
+      rf_data_set = RFDataViewer.RFDataFixtures.rf_data_set_fixture()
+      assert {:error, %Ecto.Changeset{}} = RFData.create_rf_gain(rf_data_set, @invalid_attrs)
     end
 
     test "update_rf_gain/2 with valid data updates the rf_gain" do
@@ -195,15 +201,17 @@ defmodule RFDataViewer.RFDataTest do
     end
 
     test "create_rf_vswr/1 with valid data creates a rf_vswr" do
+      rf_data_set = RFDataViewer.RFDataFixtures.rf_data_set_fixture()
       valid_attrs = %{frequency: 42, vswr: 120.5}
 
-      assert {:ok, %RFVswr{} = rf_vswr} = RFData.create_rf_vswr(valid_attrs)
+      assert {:ok, %RFVswr{} = rf_vswr} = RFData.create_rf_vswr(rf_data_set, valid_attrs)
       assert rf_vswr.frequency == 42
       assert rf_vswr.vswr == 120.5
     end
 
     test "create_rf_vswr/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = RFData.create_rf_vswr(@invalid_attrs)
+      rf_data_set = RFDataViewer.RFDataFixtures.rf_data_set_fixture()
+      assert {:error, %Ecto.Changeset{}} = RFData.create_rf_vswr(rf_data_set, @invalid_attrs)
     end
 
     test "update_rf_vswr/2 with valid data updates the rf_vswr" do

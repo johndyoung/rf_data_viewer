@@ -79,14 +79,16 @@ defmodule RFDataViewer.RFUnitsTest do
     end
 
     test "create_rf_unit_serial_number/1 with valid data creates a rf_unit_serial_number" do
+      rf_unit = rf_unit_fixture()
       valid_attrs = %{serial_number: "some serial_number"}
 
-      assert {:ok, %RFUnitSerialNumber{} = rf_unit_serial_number} = RFUnits.create_rf_unit_serial_number(valid_attrs)
+      assert {:ok, %RFUnitSerialNumber{} = rf_unit_serial_number} = RFUnits.create_rf_unit_serial_number(rf_unit, valid_attrs)
       assert rf_unit_serial_number.serial_number == "some serial_number"
     end
 
     test "create_rf_unit_serial_number/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = RFUnits.create_rf_unit_serial_number(@invalid_attrs)
+      rf_unit = rf_unit_fixture()
+      assert {:error, %Ecto.Changeset{}} = RFUnits.create_rf_unit_serial_number(rf_unit, @invalid_attrs)
     end
 
     test "update_rf_unit_serial_number/2 with valid data updates the rf_unit_serial_number" do

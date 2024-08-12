@@ -24,12 +24,14 @@ defmodule RFDataViewer.RFUnitsFixtures do
   Generate a rf_unit_serial_number.
   """
   def rf_unit_serial_number_fixture(attrs \\ %{}) do
+    rf_unit = rf_unit_fixture()
+
     {:ok, rf_unit_serial_number} =
       attrs
       |> Enum.into(%{
         serial_number: "some serial_number"
       })
-      |> RFDataViewer.RFUnits.create_rf_unit_serial_number()
+      |> then(fn sn -> RFDataViewer.RFUnits.create_rf_unit_serial_number(rf_unit, sn) end)
 
     rf_unit_serial_number
   end

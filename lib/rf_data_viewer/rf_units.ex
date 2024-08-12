@@ -147,7 +147,7 @@ defmodule RFDataViewer.RFUnits do
   """
   def create_rf_unit_serial_number(%RFUnit{} = rf_unit, attrs \\ %{}) do
     rf_unit
-    |> Ecto.build_assoc(:rf_units)
+    |> Ecto.build_assoc(:rf_unit_serial_numbers)
     |> RFUnitSerialNumber.changeset(attrs)
     |> Repo.insert()
   end

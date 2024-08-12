@@ -8,6 +8,8 @@ defmodule RFDataViewer.RFDataFixtures do
   Generate a rf_test_set.
   """
   def rf_test_set_fixture(attrs \\ %{}) do
+    rf_unit_sn = RFDataViewer.RFUnitsFixtures.rf_unit_serial_number_fixture()
+
     {:ok, rf_test_set} =
       attrs
       |> Enum.into(%{
@@ -16,7 +18,7 @@ defmodule RFDataViewer.RFDataFixtures do
         location: "some location",
         name: "some name"
       })
-      |> RFDataViewer.RFData.create_rf_test_set()
+      |> then(fn test_set -> RFDataViewer.RFData.create_rf_test_set(rf_unit_sn, test_set) end)
 
     rf_test_set
   end
@@ -25,6 +27,8 @@ defmodule RFDataViewer.RFDataFixtures do
   Generate a rf_data_set.
   """
   def rf_data_set_fixture(attrs \\ %{}) do
+    test_set = rf_test_set_fixture()
+
     {:ok, rf_data_set} =
       attrs
       |> Enum.into(%{
@@ -32,7 +36,7 @@ defmodule RFDataViewer.RFDataFixtures do
         description: "some description",
         name: "some name"
       })
-      |> RFDataViewer.RFData.create_rf_data_set()
+      |> then(fn data_set -> RFDataViewer.RFData.create_rf_data_set(test_set, data_set) end)
 
     rf_data_set
   end
@@ -41,13 +45,15 @@ defmodule RFDataViewer.RFDataFixtures do
   Generate a rf_gain.
   """
   def rf_gain_fixture(attrs \\ %{}) do
+    data_set = rf_data_set_fixture()
+
     {:ok, rf_gain} =
       attrs
       |> Enum.into(%{
         frequency: 42,
         gain: 120.5
       })
-      |> RFDataViewer.RFData.create_rf_gain()
+      |> then(fn gain -> RFDataViewer.RFData.create_rf_gain(data_set, gain) end)
 
     rf_gain
   end
@@ -56,13 +62,15 @@ defmodule RFDataViewer.RFDataFixtures do
   Generate a rf_vswr.
   """
   def rf_vswr_fixture(attrs \\ %{}) do
+    data_set = rf_data_set_fixture()
+
     {:ok, rf_vswr} =
       attrs
       |> Enum.into(%{
         frequency: 42,
         vswr: 120.5
       })
-      |> RFDataViewer.RFData.create_rf_vswr()
+      |> then(fn vswr -> RFDataViewer.RFData.create_rf_vswr(data_set, vswr) end)
 
     rf_vswr
   end
