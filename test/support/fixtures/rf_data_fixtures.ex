@@ -51,4 +51,19 @@ defmodule RFDataViewer.RFDataFixtures do
 
     rf_gain
   end
+
+  @doc """
+  Generate a rf_vswr.
+  """
+  def rf_vswr_fixture(attrs \\ %{}) do
+    {:ok, rf_vswr} =
+      attrs
+      |> Enum.into(%{
+        frequency: 42,
+        vswr: 120.5
+      })
+      |> RFDataViewer.RFData.create_rf_vswr()
+
+    rf_vswr
+  end
 end

@@ -297,4 +297,101 @@ defmodule RFDataViewer.RFData do
   def change_rf_gain(%RFGain{} = rf_gain, attrs \\ %{}) do
     RFGain.changeset(rf_gain, attrs)
   end
+
+  alias RFDataViewer.RFData.RFVswr
+
+  @doc """
+  Returns the list of rf_vswr.
+
+  ## Examples
+
+      iex> list_rf_vswr()
+      [%RFVswr{}, ...]
+
+  """
+  def list_rf_vswr do
+    Repo.all(RFVswr)
+  end
+
+  @doc """
+  Gets a single rf_vswr.
+
+  Raises `Ecto.NoResultsError` if the Rf vswr does not exist.
+
+  ## Examples
+
+      iex> get_rf_vswr!(123)
+      %RFVswr{}
+
+      iex> get_rf_vswr!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_rf_vswr!(id), do: Repo.get!(RFVswr, id)
+
+  @doc """
+  Creates a rf_vswr.
+
+  ## Examples
+
+      iex> create_rf_vswr(%{field: value})
+      {:ok, %RFVswr{}}
+
+      iex> create_rf_vswr(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_rf_vswr(%RFDataSet{} = rf_data_set, attrs \\ %{}) do
+    rf_data_set
+    |> Ecto.build_assoc(:rf_data_set)
+    |> RFVswr.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a rf_vswr.
+
+  ## Examples
+
+      iex> update_rf_vswr(rf_vswr, %{field: new_value})
+      {:ok, %RFVswr{}}
+
+      iex> update_rf_vswr(rf_vswr, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_rf_vswr(%RFVswr{} = rf_vswr, attrs) do
+    rf_vswr
+    |> RFVswr.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a rf_vswr.
+
+  ## Examples
+
+      iex> delete_rf_vswr(rf_vswr)
+      {:ok, %RFVswr{}}
+
+      iex> delete_rf_vswr(rf_vswr)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_rf_vswr(%RFVswr{} = rf_vswr) do
+    Repo.delete(rf_vswr)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking rf_vswr changes.
+
+  ## Examples
+
+      iex> change_rf_vswr(rf_vswr)
+      %Ecto.Changeset{data: %RFVswr{}}
+
+  """
+  def change_rf_vswr(%RFVswr{} = rf_vswr, attrs \\ %{}) do
+    RFVswr.changeset(rf_vswr, attrs)
+  end
 end
