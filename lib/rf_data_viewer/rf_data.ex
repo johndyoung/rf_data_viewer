@@ -200,4 +200,101 @@ defmodule RFDataViewer.RFData do
   def change_rf_data_set(%RFDataSet{} = rf_data_set, attrs \\ %{}) do
     RFDataSet.changeset(rf_data_set, attrs)
   end
+
+  alias RFDataViewer.RFData.RFGain
+
+  @doc """
+  Returns the list of rf_gain.
+
+  ## Examples
+
+      iex> list_rf_gain()
+      [%RFGain{}, ...]
+
+  """
+  def list_rf_gain do
+    Repo.all(RFGain)
+  end
+
+  @doc """
+  Gets a single rf_gain.
+
+  Raises `Ecto.NoResultsError` if the Rf gain does not exist.
+
+  ## Examples
+
+      iex> get_rf_gain!(123)
+      %RFGain{}
+
+      iex> get_rf_gain!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_rf_gain!(id), do: Repo.get!(RFGain, id)
+
+  @doc """
+  Creates a rf_gain.
+
+  ## Examples
+
+      iex> create_rf_gain(%{field: value})
+      {:ok, %RFGain{}}
+
+      iex> create_rf_gain(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_rf_gain(%RFDataSet{} = rf_data_set, attrs \\ %{}) do
+    rf_data_set
+    |> Ecto.build_assoc(:rf_data_set)
+    |> RFGain.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a rf_gain.
+
+  ## Examples
+
+      iex> update_rf_gain(rf_gain, %{field: new_value})
+      {:ok, %RFGain{}}
+
+      iex> update_rf_gain(rf_gain, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_rf_gain(%RFGain{} = rf_gain, attrs) do
+    rf_gain
+    |> RFGain.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a rf_gain.
+
+  ## Examples
+
+      iex> delete_rf_gain(rf_gain)
+      {:ok, %RFGain{}}
+
+      iex> delete_rf_gain(rf_gain)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_rf_gain(%RFGain{} = rf_gain) do
+    Repo.delete(rf_gain)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking rf_gain changes.
+
+  ## Examples
+
+      iex> change_rf_gain(rf_gain)
+      %Ecto.Changeset{data: %RFGain{}}
+
+  """
+  def change_rf_gain(%RFGain{} = rf_gain, attrs \\ %{}) do
+    RFGain.changeset(rf_gain, attrs)
+  end
 end

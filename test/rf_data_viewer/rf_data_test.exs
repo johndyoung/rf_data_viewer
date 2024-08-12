@@ -120,4 +120,60 @@ defmodule RFDataViewer.RFDataTest do
       assert %Ecto.Changeset{} = RFData.change_rf_data_set(rf_data_set)
     end
   end
+
+  describe "rf_gain" do
+    alias RFDataViewer.RFData.RFGain
+
+    import RFDataViewer.RFDataFixtures
+
+    @invalid_attrs %{frequency: nil, gain: nil}
+
+    test "list_rf_gain/0 returns all rf_gain" do
+      rf_gain = rf_gain_fixture()
+      assert RFData.list_rf_gain() == [rf_gain]
+    end
+
+    test "get_rf_gain!/1 returns the rf_gain with given id" do
+      rf_gain = rf_gain_fixture()
+      assert RFData.get_rf_gain!(rf_gain.id) == rf_gain
+    end
+
+    test "create_rf_gain/1 with valid data creates a rf_gain" do
+      valid_attrs = %{frequency: 42, gain: 120.5}
+
+      assert {:ok, %RFGain{} = rf_gain} = RFData.create_rf_gain(valid_attrs)
+      assert rf_gain.frequency == 42
+      assert rf_gain.gain == 120.5
+    end
+
+    test "create_rf_gain/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = RFData.create_rf_gain(@invalid_attrs)
+    end
+
+    test "update_rf_gain/2 with valid data updates the rf_gain" do
+      rf_gain = rf_gain_fixture()
+      update_attrs = %{frequency: 43, gain: 456.7}
+
+      assert {:ok, %RFGain{} = rf_gain} = RFData.update_rf_gain(rf_gain, update_attrs)
+      assert rf_gain.frequency == 43
+      assert rf_gain.gain == 456.7
+    end
+
+    test "update_rf_gain/2 with invalid data returns error changeset" do
+      rf_gain = rf_gain_fixture()
+      assert {:error, %Ecto.Changeset{}} = RFData.update_rf_gain(rf_gain, @invalid_attrs)
+      assert rf_gain == RFData.get_rf_gain!(rf_gain.id)
+    end
+
+    test "delete_rf_gain/1 deletes the rf_gain" do
+      rf_gain = rf_gain_fixture()
+      assert {:ok, %RFGain{}} = RFData.delete_rf_gain(rf_gain)
+      assert_raise Ecto.NoResultsError, fn -> RFData.get_rf_gain!(rf_gain.id) end
+    end
+
+    test "change_rf_gain/1 returns a rf_gain changeset" do
+      rf_gain = rf_gain_fixture()
+      assert %Ecto.Changeset{} = RFData.change_rf_gain(rf_gain)
+    end
+  end
 end
