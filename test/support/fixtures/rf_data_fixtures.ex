@@ -20,4 +20,20 @@ defmodule RFDataViewer.RFDataFixtures do
 
     rf_test_set
   end
+
+  @doc """
+  Generate a rf_data_set.
+  """
+  def rf_data_set_fixture(attrs \\ %{}) do
+    {:ok, rf_data_set} =
+      attrs
+      |> Enum.into(%{
+        date: ~U[2024-08-11 01:05:00Z],
+        description: "some description",
+        name: "some name"
+      })
+      |> RFDataViewer.RFData.create_rf_data_set()
+
+    rf_data_set
+  end
 end

@@ -103,4 +103,101 @@ defmodule RFDataViewer.RFData do
   def change_rf_test_set(%RFTestSet{} = rf_test_set, attrs \\ %{}) do
     RFTestSet.changeset(rf_test_set, attrs)
   end
+
+  alias RFDataViewer.RFData.RFDataSet
+
+  @doc """
+  Returns the list of rf_data_set.
+
+  ## Examples
+
+      iex> list_rf_data_set()
+      [%RFDataSet{}, ...]
+
+  """
+  def list_rf_data_set do
+    Repo.all(RFDataSet)
+  end
+
+  @doc """
+  Gets a single rf_data_set.
+
+  Raises `Ecto.NoResultsError` if the Rf data set does not exist.
+
+  ## Examples
+
+      iex> get_rf_data_set!(123)
+      %RFDataSet{}
+
+      iex> get_rf_data_set!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_rf_data_set!(id), do: Repo.get!(RFDataSet, id)
+
+  @doc """
+  Creates a rf_data_set.
+
+  ## Examples
+
+      iex> create_rf_data_set(%{field: value})
+      {:ok, %RFDataSet{}}
+
+      iex> create_rf_data_set(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_rf_data_set(%RFTestSet{} = rf_test_set, attrs \\ %{}) do
+    rf_test_set
+    |> Ecto.build_assoc(:rf_test_set)
+    |> RFDataSet.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a rf_data_set.
+
+  ## Examples
+
+      iex> update_rf_data_set(rf_data_set, %{field: new_value})
+      {:ok, %RFDataSet{}}
+
+      iex> update_rf_data_set(rf_data_set, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_rf_data_set(%RFDataSet{} = rf_data_set, attrs) do
+    rf_data_set
+    |> RFDataSet.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a rf_data_set.
+
+  ## Examples
+
+      iex> delete_rf_data_set(rf_data_set)
+      {:ok, %RFDataSet{}}
+
+      iex> delete_rf_data_set(rf_data_set)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_rf_data_set(%RFDataSet{} = rf_data_set) do
+    Repo.delete(rf_data_set)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking rf_data_set changes.
+
+  ## Examples
+
+      iex> change_rf_data_set(rf_data_set)
+      %Ecto.Changeset{data: %RFDataSet{}}
+
+  """
+  def change_rf_data_set(%RFDataSet{} = rf_data_set, attrs \\ %{}) do
+    RFDataSet.changeset(rf_data_set, attrs)
+  end
 end
