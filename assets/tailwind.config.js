@@ -14,7 +14,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: "#FD4F00",
+        rfDark: "#102A53",
+        rfMedium: {
+          dark: "#486581",
+          DEFAULT: "#829AB1",
+          light: "#BCCCDC",
+        },
+        rfLight: "#F0F4F8",
+        DEFAULT: "#BCCCDC"
+      },
+      fontFamily: {
+        brand: ["Verdana", "Georgia", "sans-serif"]
       }
     },
   },
