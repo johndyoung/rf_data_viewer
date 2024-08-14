@@ -1,0 +1,73 @@
+<div class="relative overflow-x-auto mb-5 rounded-lg">
+  <table class="w-full text-sm text-left text-slate-700">
+    <thead class="text-xs uppercase bg-medium-light">
+      <tr>
+        <th scope="col" class="px-6 py-3">
+          Manufacturer
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Model
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Description
+        </th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <tr class="bg-light border-b font-medium">
+        <td class="px-6 py-4">
+          <%= @unit.manufacturer %>
+        </td>
+        
+        <td class="px-6 py-4">
+          <%= @unit.name %>
+        </td>
+        
+        <td class="px-6 py-4">
+          <%= @unit.description %>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="relative overflow-x-auto rounded-lg">
+  <table class="w-full text-sm text-left text-slate-700">
+    <thead class="text-xs uppercase bg-medium-light">
+      <tr>
+        <th scope="col" class="px-6 py-3">
+          Serial Number
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Test Sets
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Test Data
+        </th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <%= for {sn, td_count, data_count} <- @serial_numbers do %>
+        <tr Key={sn.id} class="bg-light border-b font-medium">
+          <td class="px-6 py-4">
+            <.link href={~p"/rf/units/sn/#{sn.id}"} class="underline hover:text-slate-500"><%= sn.serial_number %></.link>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= td_count %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= data_count %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
