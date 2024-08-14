@@ -1,0 +1,110 @@
+<div class="relative overflow-x-auto mb-5 rounded-lg">
+  <table class="w-full text-sm text-left text-slate-700">
+    <thead class="text-xs uppercase bg-medium-light">
+      <tr>
+        <th scope="col" class="px-6 py-3">
+          Manufacturer
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Model
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Description
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Serial Number
+        </th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <tr class="bg-light border-b font-medium">
+        <td class="px-6 py-4">
+          <%= @sn.unit.manufacturer %>
+        </td>
+        
+        <td class="px-6 py-4">
+          <%= @sn.unit.name %>
+        </td>
+        
+        <td class="px-6 py-4">
+          <%= @sn.unit.description %>
+        </td>
+        
+        <td class="px-6 py-4">
+          <%= @sn.serial_number %>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="relative overflow-x-auto rounded-lg">
+  <table class="w-full text-sm text-left text-slate-700">
+    <thead class="text-xs uppercase bg-medium-light">
+      <tr>
+        <th scope="col" class="px-6 py-3">
+          Name
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Location
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Date
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Description
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Data Sets
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Test Data
+        </th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <%= for {test_set, ds_count, data_count} <- @test_sets do %>
+        <tr Key={test_set.id} class="bg-light border-b font-medium">
+          <td class="px-6 py-4">
+            <.link
+              href={~p"/rf/data/test_set/#{test_set.id}"}
+              class="underline hover:text-slate-500"
+            >
+              <%= test_set.name %>
+            </.link>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= test_set.location %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= test_set.date %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= test_set.description %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= ds_count %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= data_count %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

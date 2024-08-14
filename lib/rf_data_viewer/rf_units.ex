@@ -141,7 +141,7 @@ defmodule RFDataViewer.RFUnits do
   end
 
   @doc """
-  Returns a get of all serial numbers associated with a given RF Unit in a tuple of the form {sn, test_set_count, data_count}
+  Returns a list of all serial numbers associated with a given RF Unit in a tuple of the form {sn, test_set_count, data_count}
 
   ## Examples
 

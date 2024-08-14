@@ -23,6 +23,27 @@ defmodule RFDataViewer.RFData do
   end
 
   @doc """
+  Returns a list of all test sets associated with a given RF Unit Serial number in a tuple of the form {test_set, data_set_count, data_count}
+
+  ## Examples
+
+      iex> get_test_sets_with_counts(1)
+      [{%RFTestSet{}, 0, 0}, ...]
+  """
+  def get_test_sets_with_counts(serial_number_id) do
+    query =
+      from ts in RFTestSet,
+        left_join: ds in assoc(ts, :data_sets),
+        left_join: g in assoc(ds, :gain),
+        left_join: v in assoc(ds, :vswr),
+        where: ts.rf_unit_serial_number_id == ^serial_number_id,
+        group_by: ts.id,
+        select: {ts, count(ds.id), count(g.id) + count(v.id)}
+
+    Repo.all(query)
+  end
+
+  @doc """
   Gets a single rf_test_set.
 
   Raises `Ecto.NoResultsError` if the Rf test set does not exist.

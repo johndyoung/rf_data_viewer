@@ -70,6 +70,7 @@ defmodule RFDataViewerWeb.Router do
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
       live "rf/units/manage", RFUnitsManageLive
       live "rf/units/unit/:rf_unit_id", RFUnitsUnitLive
+      live "rf/units/sn/:sn_id", RFUnitsSerialNumberLive
       live "rf/data/upload", RFDataUploadLive
     end
   end
