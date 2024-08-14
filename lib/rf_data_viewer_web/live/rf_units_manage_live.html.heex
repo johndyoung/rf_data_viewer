@@ -1,26 +1,53 @@
-<b>Todo:</b>
-<ul class="list-disc px-5 leading-8">
-  <li>Link to form to create new RF unit</li>
-  
-  <li>Implement feature to create new RF unit</li>
-  
-  <li>Implement list of existing RF units</li>
-  
-  <li>
-    Each RF unit will link to a list of subordinate serial numbers with capability to add new serial number.
-  </li>
-  
-  <li>Need list of test sets for a given serial number. Need capability to create new one.</li>
-  
-  <li>
-    Need capability to upload files to populate test set with data sets and supporting gain and VSWR data
-  </li>
-  
-  <li>Need capability to view each gain data set and VSWR data set as a graph.</li>
-  
-  <li>Need capability to get VSWR statistics.</li>
-  
-  <li>
-    Need capability to define thresholds for each gain data set. Use this to render new information.
-  </li>
-</ul>
+<div class="relative overflow-x-auto rounded-lg">
+  <table class="w-full text-sm text-left text-slate-700">
+    <thead class="text-xs uppercase bg-medium-light">
+      <tr>
+        <th scope="col" class="px-6 py-3">
+          Manufacturer
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Model
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Description
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Serial Numbers
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Test Data
+        </th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <%= for {unit, sn_count, data_count} <- @rf_units do %>
+        <tr Key={unit.id} class="bg-light border-b font-medium">
+          <td class="px-6 py-4">
+            <%= unit.manufacturer %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <.link href={~p"/rf/units/unit/#{unit.id}"} class="underline hover:text-slate-500"><%= unit.name %></.link>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= unit.description %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= sn_count %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= data_count %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
