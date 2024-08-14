@@ -19,13 +19,17 @@
         </th>
         
         <th scope="col" class="px-6 py-3">
+          Test Sets
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
           Test Data
         </th>
       </tr>
     </thead>
     
     <tbody>
-      <%= for {unit, sn_count, data_count} <- @rf_units do %>
+      <%= for {unit, sn_count, ts_count, _, data_count} <- @rf_units do %>
         <tr Key={unit.id} class="bg-light border-b font-medium">
           <td class="px-6 py-4">
             <.link href={~p"/rf/units/unit/#{unit.id}"} class="underline hover:text-slate-500">
@@ -43,6 +47,10 @@
           
           <td class="px-6 py-4">
             <%= sn_count %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= ts_count %>
           </td>
           
           <td class="px-6 py-4">

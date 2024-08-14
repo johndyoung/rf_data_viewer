@@ -27,7 +27,12 @@
         </td>
         
         <td class="px-6 py-4">
-          <%= @sn.unit.name %>
+          <.link
+            href={~p"/rf/units/unit/#{@sn.rf_unit_id}"}
+            class="underline hover:text-slate-500"
+          >
+            <%= @sn.unit.name %>
+          </.link>
         </td>
         
         <td class="px-6 py-4">

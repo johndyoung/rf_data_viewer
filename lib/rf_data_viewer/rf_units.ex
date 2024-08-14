@@ -5,6 +5,10 @@ defmodule RFDataViewer.RFUnits do
 
   import Ecto.Query, warn: false
   alias RFDataViewer.RFUnits.RFUnitSerialNumber
+  alias RFDataViewer.RFData.RFTestSet
+  alias RFDataViewer.RFData.RFDataSet
+  alias RFDataViewer.RFData.RFGain
+  alias RFDataViewer.RFData.RFVswr
   alias RFDataViewer.Repo
 
   alias RFDataViewer.RFUnits.RFUnit
@@ -31,15 +35,59 @@ defmodule RFDataViewer.RFUnits do
       [{%RFUnit{}, 0, 0}, ...]
   """
   def list_rf_units_with_counts do
+    serial_number_subquery =
+      from s in RFUnitSerialNumber,
+        group_by: s.rf_unit_id,
+        select: %{id: s.rf_unit_id, count: count()}
+
+    test_set_subquery =
+      from t in RFTestSet,
+        join: s in assoc(t, :serial_number),
+        group_by: s.rf_unit_id,
+        select: %{id: s.rf_unit_id, count: count()}
+
+    data_set_subquery =
+      from d in RFDataSet,
+        join: t in assoc(d, :test_set),
+        join: s in assoc(t, :serial_number),
+        group_by: s.rf_unit_id,
+        select: %{id: s.rf_unit_id, count: count()}
+
+    gain_subquery =
+      from g in RFGain,
+        join: d in assoc(g, :data_set),
+        join: t in assoc(d, :test_set),
+        join: s in assoc(t, :serial_number),
+        group_by: s.rf_unit_id,
+        select: %{id: s.rf_unit_id, count: count()}
+
+    vswr_subquery =
+      from v in RFVswr,
+        join: d in assoc(v, :data_set),
+        join: t in assoc(d, :test_set),
+        join: s in assoc(t, :serial_number),
+        group_by: s.rf_unit_id,
+        select: %{id: s.rf_unit_id, count: count()}
+
     query =
       from u in RFUnit,
-        left_join: sn in assoc(u, :serial_numbers),
-        left_join: ts in assoc(sn, :test_sets),
-        left_join: ds in assoc(ts, :data_sets),
-        left_join: g in assoc(ds, :gain),
-        left_join: v in assoc(ds, :vswr),
-        group_by: u.id,
-        select: {u, count(sn.id), count(g.id) + count(v.id)}
+        left_join: s in subquery(serial_number_subquery),
+        on: s.id == u.id,
+        left_join: t in subquery(test_set_subquery),
+        on: t.id == u.id,
+        left_join: d in subquery(data_set_subquery),
+        on: d.id == u.id,
+        left_join: g in subquery(gain_subquery),
+        on: g.id == u.id,
+        left_join: v in subquery(vswr_subquery),
+        on: v.id == u.id,
+        select: {
+          u,
+          coalesce(s.count, 0),
+          coalesce(t.count, 0),
+          coalesce(d.count, 0),
+          coalesce(g.count + v.count, 0)
+        }
 
     Repo.all(query)
   end
@@ -149,17 +197,51 @@ defmodule RFDataViewer.RFUnits do
       [{%RFUnitSerialNumber{}, 0, 0}, ...]
   """
   def get_rf_unit_serial_numbers_with_counts(rf_unit_id) do
+    test_set_subquery =
+      from t in RFTestSet,
+        group_by: t.rf_unit_serial_number_id,
+        select: %{id: t.rf_unit_serial_number_id, count: count()}
+
+    data_set_subquery =
+      from d in RFDataSet,
+        join: t in assoc(d, :test_set),
+        group_by: t.rf_unit_serial_number_id,
+        select: %{id: t.rf_unit_serial_number_id, count: count()}
+
+    gain_subquery =
+      from g in RFGain,
+        join: d in assoc(g, :data_set),
+        join: t in assoc(d, :test_set),
+        group_by: t.rf_unit_serial_number_id,
+        select: %{id: t.rf_unit_serial_number_id, count: count()}
+
+    vswr_subquery =
+      from v in RFVswr,
+        join: d in assoc(v, :data_set),
+        join: t in assoc(d, :test_set),
+        group_by: t.rf_unit_serial_number_id,
+        select: %{id: t.rf_unit_serial_number_id, count: count()}
+
     query =
-      from sn in RFUnitSerialNumber,
-        left_join: ts in assoc(sn, :test_sets),
-        left_join: ds in assoc(ts, :data_sets),
-        left_join: g in assoc(ds, :gain),
-        left_join: v in assoc(ds, :vswr),
-        where: sn.rf_unit_id == ^rf_unit_id,
-        group_by: sn.id,
-        select: {sn, count(ts.id), count(g.id) + count(v.id)}
+      from s in RFUnitSerialNumber,
+        left_join: t in subquery(test_set_subquery),
+        on: t.id == s.id,
+        left_join: d in subquery(data_set_subquery),
+        on: d.id == s.id,
+        left_join: g in subquery(gain_subquery),
+        on: g.id == s.id,
+        left_join: v in subquery(vswr_subquery),
+        on: v.id == s.id,
+        where: s.rf_unit_id == ^rf_unit_id,
+        select: {
+          s,
+          coalesce(t.count, 0),
+          coalesce(g.count, 0),
+          coalesce(g.count + v.count, 0)
+        }
 
     Repo.all(query)
+    |> IO.inspect()
   end
 
   @doc """

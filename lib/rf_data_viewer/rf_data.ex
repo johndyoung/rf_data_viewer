@@ -4,10 +4,12 @@ defmodule RFDataViewer.RFData do
   """
 
   import Ecto.Query, warn: false
-  alias RFDataViewer.RFUnits.RFUnitSerialNumber
   alias RFDataViewer.Repo
-
+  alias RFDataViewer.RFUnits.RFUnitSerialNumber
   alias RFDataViewer.RFData.RFTestSet
+  alias RFDataViewer.RFData.RFDataSet
+  alias RFDataViewer.RFData.RFGain
+  alias RFDataViewer.RFData.RFVswr
 
   @doc """
   Returns the list of rf_test_set.
@@ -18,7 +20,7 @@ defmodule RFDataViewer.RFData do
       [%RFTestSet{}, ...]
 
   """
-  def list_rf_test_set do
+  def list_rf_test_sets do
     Repo.all(RFTestSet)
   end
 
@@ -30,15 +32,35 @@ defmodule RFDataViewer.RFData do
       iex> get_test_sets_with_counts(1)
       [{%RFTestSet{}, 0, 0}, ...]
   """
-  def get_test_sets_with_counts(serial_number_id) do
+  def get_rf_test_sets_with_counts(serial_number_id) do
+    data_set_subquery =
+      from d in RFDataSet,
+        group_by: d.rf_test_set_id,
+        select: %{id: d.rf_test_set_id, count: count()}
+
+    gain_subquery =
+      from g in RFGain,
+        join: d in assoc(g, :data_set),
+        group_by: d.rf_test_set_id,
+        select: %{id: d.rf_test_set_id, count: count()}
+
+    vswr_subquery =
+      from v in RFVswr,
+        join: d in assoc(v, :data_set),
+        group_by: d.rf_test_set_id,
+        select: %{id: d.rf_test_set_id, count: count()}
+
     query =
-      from ts in RFTestSet,
-        left_join: ds in assoc(ts, :data_sets),
-        left_join: g in assoc(ds, :gain),
-        left_join: v in assoc(ds, :vswr),
-        where: ts.rf_unit_serial_number_id == ^serial_number_id,
-        group_by: ts.id,
-        select: {ts, count(ds.id), count(g.id) + count(v.id)}
+      from t in RFTestSet,
+        left_join: d in subquery(data_set_subquery),
+        on: d.id == t.id,
+        left_join: g in subquery(gain_subquery),
+        on: g.id == t.id,
+        left_join: v in subquery(vswr_subquery),
+        on: v.id == t.id,
+        where: t.rf_unit_serial_number_id == ^serial_number_id,
+        preload: [serial_number: :unit],
+        select: {t, coalesce(d.count, 0), coalesce(g.count + v.count, 0)}
 
     Repo.all(query)
   end
@@ -58,6 +80,48 @@ defmodule RFDataViewer.RFData do
 
   """
   def get_rf_test_set!(id), do: Repo.get!(RFTestSet, id)
+
+  @doc """
+  Returns a list of all test sets associated with a given RF Unit Serial number in a tuple of the form {test_set, data_set_count, data_count}
+
+  ## Examples
+
+      iex> get_test_sets_with_counts(1)
+      [{%RFTestSet{}, 0, 0}, ...]
+  """
+  def get_rf_test_set_with_count!(test_set_id) do
+    data_set_subquery =
+      from d in RFDataSet,
+        join: t in assoc(d, :test_set),
+        group_by: t.id,
+        select: %{id: t.id, count: count()}
+
+    gain_subquery =
+      from g in RFGain,
+        join: d in assoc(g, :data_set),
+        group_by: d.rf_test_set_id,
+        select: %{id: d.rf_test_set_id, count: count()}
+
+    vswr_subquery =
+      from v in RFVswr,
+        join: d in assoc(v, :data_set),
+        group_by: d.rf_test_set_id,
+        select: %{id: d.rf_test_set_id, count: count()}
+
+    query =
+      from t in RFTestSet,
+        left_join: d in subquery(data_set_subquery),
+        on: d.id == t.id,
+        left_join: g in subquery(gain_subquery),
+        on: g.id == t.id,
+        left_join: v in subquery(vswr_subquery),
+        on: v.id == t.id,
+        where: t.id == ^test_set_id,
+        preload: [serial_number: :unit],
+        select: {t, coalesce(d.count, 0), coalesce(g.count + v.count, 0)}
+
+    Repo.one!(query)
+  end
 
   @doc """
   Creates a rf_test_set.
@@ -136,7 +200,7 @@ defmodule RFDataViewer.RFData do
       [%RFDataSet{}, ...]
 
   """
-  def list_rf_data_set do
+  def list_rf_data_sets do
     Repo.all(RFDataSet)
   end
 

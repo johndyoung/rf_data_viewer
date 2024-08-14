@@ -53,14 +53,14 @@
     </thead>
     
     <tbody>
-      <%= for {sn, td_count, data_count} <- @serial_numbers do %>
+      <%= for {sn, ts_count, _, data_count} <- @serial_numbers do %>
         <tr Key={sn.id} class="bg-light border-b font-medium">
           <td class="px-6 py-4">
             <.link href={~p"/rf/units/sn/#{sn.id}"} class="underline hover:text-slate-500"><%= sn.serial_number %></.link>
           </td>
           
           <td class="px-6 py-4">
-            <%= td_count %>
+            <%= ts_count %>
           </td>
           
           <td class="px-6 py-4">

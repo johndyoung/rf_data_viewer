@@ -7,7 +7,7 @@ defmodule RFDataViewerWeb.RFUnitsSerialNumberLive do
       RFDataViewer.RFUnits.get_rf_unit_serial_number!(sn_id)
       |> Repo.preload(:unit)
 
-    test_sets = RFDataViewer.RFData.get_test_sets_with_counts(sn.id)
+    test_sets = RFDataViewer.RFData.get_rf_test_sets_with_counts(sn.id)
 
     {:ok, assign(socket, %{sn: sn, test_sets: test_sets})}
   end
