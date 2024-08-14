@@ -6,7 +6,7 @@ defmodule RFDataViewerWeb.UserResetPasswordLive do
   def render(assigns) do
     ~H"""
     <div class="mx-auto max-w-sm">
-      <.header class="text-center">Reset Password</.header>
+      <.header class="text-center bg-medium-light rounded-lg py-3">Reset Password</.header>
 
       <.simple_form
         for={@form}
@@ -30,7 +30,7 @@ defmodule RFDataViewerWeb.UserResetPasswordLive do
         </:actions>
       </.simple_form>
 
-      <p class="text-center text-sm mt-4">
+      <p class="text-center text-sm mt-4 bg-medium-light rounded-lg py-3">
         <.link href={~p"/users/register"}>Register</.link>
         | <.link href={~p"/users/log_in"}>Log in</.link>
       </p>

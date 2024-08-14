@@ -14,13 +14,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        rfDark: "#102A53",
-        rfMedium: {
+        dark: "#102A53",
+        medium: {
           dark: "#486581",
           DEFAULT: "#829AB1",
           light: "#BCCCDC",
         },
-        rfLight: "#F0F4F8",
+        light: "#F0F4F8",
         DEFAULT: "#BCCCDC"
       },
       fontFamily: {

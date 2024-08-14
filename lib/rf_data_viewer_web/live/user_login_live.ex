@@ -3,8 +3,8 @@ defmodule RFDataViewerWeb.UserLoginLive do
 
   def render(assigns) do
     ~H"""
-    <div class="mx-auto max-w-sm">
-      <.header class="text-center">
+    <div class="mx-auto max-w-lg">
+      <.header class="text-center bg-medium-light rounded-lg py-3">
         Log in to account
         <:subtitle>
           Don't have an account?
@@ -21,7 +21,7 @@ defmodule RFDataViewerWeb.UserLoginLive do
 
         <:actions>
           <.input field={@form[:remember_me]} type="checkbox" label="Keep me logged in" />
-          <.link href={~p"/users/reset_password"} class="text-sm font-semibold">
+          <.link href={~p"/users/reset_password"} class="text-sm font-semibold text-black hover:underline">
             Forgot your password?
           </.link>
         </:actions>

@@ -5,12 +5,12 @@ defmodule RFDataViewerWeb.UserSettingsLive do
 
   def render(assigns) do
     ~H"""
-    <.header class="text-center">
+    <.header class="text-center bg-medium-light rounded-lg py-3">
       Account Settings
       <:subtitle>Manage your account email address and password settings</:subtitle>
     </.header>
 
-    <div class="space-y-12 divide-y">
+    <div class="space-y-6 divide-y">
       <div>
         <.simple_form
           for={@email_form}

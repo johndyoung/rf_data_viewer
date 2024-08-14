@@ -6,7 +6,7 @@ defmodule RFDataViewerWeb.UserConfirmationLive do
   def render(%{live_action: :edit} = assigns) do
     ~H"""
     <div class="mx-auto max-w-sm">
-      <.header class="text-center">Confirm Account</.header>
+      <.header class="text-center bg-medium-light rounded-lg py-3">Confirm Account</.header>
 
       <.simple_form for={@form} id="confirmation_form" phx-submit="confirm_account">
         <input type="hidden" name={@form[:token].name} value={@form[:token].value} />
@@ -15,7 +15,7 @@ defmodule RFDataViewerWeb.UserConfirmationLive do
         </:actions>
       </.simple_form>
 
-      <p class="text-center mt-4">
+      <p class="text-center mt-4 bg-medium-light rounded-lg py-3">
         <.link href={~p"/users/register"}>Register</.link>
         | <.link href={~p"/users/log_in"}>Log in</.link>
       </p>

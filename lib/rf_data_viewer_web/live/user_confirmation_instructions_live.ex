@@ -6,7 +6,7 @@ defmodule RFDataViewerWeb.UserConfirmationInstructionsLive do
   def render(assigns) do
     ~H"""
     <div class="mx-auto max-w-sm">
-      <.header class="text-center">
+      <.header class="text-center bg-medium-light rounded-lg py-3">
         No confirmation instructions received?
         <:subtitle>We'll send a new confirmation link to your inbox</:subtitle>
       </.header>
@@ -20,7 +20,7 @@ defmodule RFDataViewerWeb.UserConfirmationInstructionsLive do
         </:actions>
       </.simple_form>
 
-      <p class="text-center mt-4">
+      <p class="text-center mt-4 bg-medium-light rounded-lg py-3">
         <.link href={~p"/users/register"}>Register</.link>
         | <.link href={~p"/users/log_in"}>Log in</.link>
       </p>
