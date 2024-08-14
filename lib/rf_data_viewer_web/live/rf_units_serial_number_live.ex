@@ -1,6 +1,6 @@
 defmodule RFDataViewerWeb.RFUnitsSerialNumberLive do
-  alias RFDataViewer.Repo
   use RFDataViewerWeb, :live_view
+  alias RFDataViewer.Repo
 
   def mount(%{"sn_id" => sn_id} = _params, _session, socket) do
     sn =
