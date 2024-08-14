@@ -5,7 +5,7 @@ defmodule RFDataViewer.RFData.RFVswr do
   schema "rf_vswr" do
     field :frequency, :integer
     field :vswr, :float
-    belongs_to :rf_data_set, RFDataViewer.RFData.RFDataSet
+    belongs_to :data_set, RFDataViewer.RFData.RFDataSet, foreign_key: :rf_data_set_id
 
     timestamps(type: :utc_datetime)
   end

@@ -6,7 +6,7 @@ defmodule RFDataViewer.RFUnits.RFUnit do
     field :name, :string
     field :description, :string
     field :manufacturer, :string
-    has_many :rf_unit_serial_numbers, RFDataViewer.RFUnits.RFUnitSerialNumber
+    has_many :serial_numbers, RFDataViewer.RFUnits.RFUnitSerialNumber
 
     timestamps(type: :utc_datetime)
   end

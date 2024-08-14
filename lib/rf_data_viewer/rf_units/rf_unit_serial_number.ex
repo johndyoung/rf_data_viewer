@@ -4,8 +4,8 @@ defmodule RFDataViewer.RFUnits.RFUnitSerialNumber do
 
   schema "rf_unit_serial_numbers" do
     field :serial_number, :string
-    belongs_to :rf_units, RFDataViewer.RFUnits.RFUnit, foreign_key: :rf_unit_id
-    has_many :rf_test_set, RFDataViewer.RFData.RFTestSet
+    belongs_to :unit, RFDataViewer.RFUnits.RFUnit, foreign_key: :rf_unit_id
+    has_many :test_sets, RFDataViewer.RFData.RFTestSet, foreign_key: :rf_unit_serial_number_id
 
     timestamps(type: :utc_datetime)
   end
