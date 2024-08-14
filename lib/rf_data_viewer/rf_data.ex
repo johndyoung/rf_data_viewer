@@ -205,6 +205,40 @@ defmodule RFDataViewer.RFData do
   end
 
   @doc """
+  Returns the list of rf_data_sets with counts in form of tuple {data_set, gain_count, vswr_count}.
+
+  ## Examples
+
+      iex> get_rf_data_sets_with_counts()
+      [{%RFDataSet{}, 0, 0}, ...]
+
+  """
+  def get_rf_data_sets_with_counts(test_set_id) do
+    gain_subquery =
+      from g in RFGain,
+        join: d in assoc(g, :data_set),
+        group_by: d.id,
+        select: %{id: d.id, count: count()}
+
+    vswr_subquery =
+      from v in RFVswr,
+        join: d in assoc(v, :data_set),
+        group_by: d.id,
+        select: %{id: d.id, count: count()}
+
+    query =
+      from d in RFDataSet,
+        left_join: g in subquery(gain_subquery),
+        on: g.id == d.id,
+        left_join: v in subquery(vswr_subquery),
+        on: v.id == d.id,
+        where: d.rf_test_set_id == ^test_set_id,
+        select: {d, coalesce(g.count, 0), coalesce(v.count, 0)}
+
+    Repo.all(query)
+  end
+
+  @doc """
   Gets a single rf_data_set.
 
   Raises `Ecto.NoResultsError` if the Rf data set does not exist.

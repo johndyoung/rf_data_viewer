@@ -1,0 +1,128 @@
+<div class="relative overflow-x-auto mb-5 rounded-lg">
+  <table class="w-full text-sm text-left text-slate-700">
+    <thead class="text-xs uppercase bg-medium-light">
+      <tr>
+        <th scope="col" class="px-6 py-3">
+          Manufacturer
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Model
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Description
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Serial Number
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Data Sets
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Test Data
+        </th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <tr class="bg-light border-b font-medium">
+        <td class="px-6 py-4">
+          <%= @test_set.serial_number.unit.manufacturer %>
+        </td>
+        
+        <td class="px-6 py-4">
+          <.link
+            href={~p"/rf/units/unit/#{@test_set.serial_number.rf_unit_id}"}
+            class="underline hover:text-slate-500"
+          >
+            <%= @test_set.serial_number.unit.name %>
+          </.link>
+        </td>
+        
+        <td class="px-6 py-4">
+          <%= @test_set.serial_number.unit.description %>
+        </td>
+        
+        <td class="px-6 py-4">
+          <.link
+            href={~p"/rf/units/sn/#{@test_set.serial_number.id}"}
+            class="underline hover:text-slate-500"
+          >
+            <%= @test_set.serial_number.serial_number %>
+          </.link>
+        </td>
+        
+        <td class="px-6 py-4">
+          <%= @data_set_count %>
+        </td>
+        
+        <td class="px-6 py-4">
+          <%= @data_count %>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="relative overflow-x-auto rounded-lg">
+  <table class="w-full text-sm text-left text-slate-700">
+    <thead class="text-xs uppercase bg-medium-light">
+      <tr>
+        <th scope="col" class="px-6 py-3">
+          Name
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Date
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Description
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          Gain Measurements
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
+          VSWR Measurements
+        </th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <%= for {data_set, gain_count, vswr_count} <- @data_sets do %>
+        <tr Key={data_set.id} class="bg-light border-b font-medium">
+          <td class="px-6 py-4">
+            <.link
+              href={~p"/rf/data/data_set/#{data_set.id}"}
+              class="underline hover:text-slate-500"
+            >
+              <%= data_set.name %>
+            </.link>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= data_set.date %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= data_set.description %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= gain_count %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <%= vswr_count %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

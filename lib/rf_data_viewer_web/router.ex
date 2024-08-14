@@ -68,10 +68,11 @@ defmodule RFDataViewerWeb.Router do
       on_mount: [{RFDataViewerWeb.UserAuth, :ensure_authenticated}] do
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
-      live "rf/units/manage", RFUnitsManageLive
-      live "rf/units/unit/:rf_unit_id", RFUnitsUnitLive
-      live "rf/units/sn/:sn_id", RFUnitsSerialNumberLive
-      live "rf/data/upload", RFDataUploadLive
+      live "/rf/units/manage", RFUnitsManageLive
+      live "/rf/units/unit/:rf_unit_id", RFUnitsUnitLive
+      live "/rf/units/sn/:sn_id", RFUnitsSerialNumberLive
+      live "/rf/data/test_set/:test_set_id", RFDataTestSetLive
+      live "/rf/data/upload", RFDataUploadLive
     end
   end
 
