@@ -1,3 +1,88 @@
+<div class="ml-1 mb-6">
+  <div
+    id="modal-control"
+    class="hidden"
+    data-open-modal={show_modal(@modal_id)}
+    data-close-modal={hide_modal(@modal_id)}
+  />
+  <button
+    phx-click="create"
+    class="bg-medium-light text-slate-700 hover:bg-light rounded-full px-4 py-2 font-semibold"
+  >
+    Create New Test Set
+  </button>
+</div>
+
+<.modal id="ts-form-container">
+  <.simple_form for={@form} id="ts-form" phx-submit="save" phx-change="validate">
+    <.error :if={@check_errors}>
+      Please check the errors below.
+    </.error>
+     <.input field={@form[:name]} type="text" label="Name" required autofocus />
+     <.input field={@form[:location]} type="text" label="Location" required />
+     <.input field={@form[:description]} type="text" label="Description" required />     
+     <.input field={@form[:date]} type="date" label="Date" required />
+    <:actions>
+      <.button phx-disable-with="Saving test set..." class="w-full">
+        Save Test Set
+      </.button>
+    </:actions>
+  </.simple_form>
+</.modal>
+
+<.modal id="delete-ts">
+  <p class="font-bold text-center pb-3">
+    Are you sure you wish to delete the following Test Set?
+  </p>
+  
+  <dl class="divide-y grid grid-cols-2 justify-center space-x-3">
+    <dt class="font-semibold text-right">Manufacturer:</dt>
+    
+    <dd><%= @sn.unit.manufacturer %></dd>
+    
+    <dt class="font-semibold text-right">Name:</dt>
+    
+    <dd><%= @sn.unit.name %></dd>
+    
+    <dt class="font-semibold text-right">Serial Number:</dt>
+    
+    <dd><%= @sn.serial_number %></dd>
+    
+    <dt class="font-semibold text-right">Test Set Name:</dt>
+    
+    <dd><%= @edit_ts.name %></dd>
+    
+    <dt class="font-semibold text-right">Test Set Location:</dt>
+    
+    <dd><%= @edit_ts.location %></dd>
+    
+    <dt class="font-semibold text-right">Test Set Date:</dt>
+    
+    <dd><%= @edit_ts.date %></dd>
+  </dl>
+  
+  <p class="font-extrabold text-center py-3">
+    All subordinate data associated with this test set will be deleted.
+  </p>
+  
+  <div class="grid grid-cols-2">
+    <button
+      phx-click="confirm_delete"
+      phx-value-ts_id={@edit_ts.id}
+      class="bg-medium-light text-slate-700 hover:bg-medium rounded-full px-4 py-2 mx-2 font-semibold"
+    >
+      Delete Serial Number
+    </button>
+    
+    <button
+      phx-click="cancel_delete"
+      class="bg-medium-light text-slate-700 hover:bg-medium rounded-full px-4 py-2 mx-2 font-semibold"
+    >
+      Cancel
+    </button>
+  </div>
+</.modal>
+
 <div class="relative overflow-x-auto mb-5 rounded-lg">
   <table class="w-full text-sm text-left text-slate-700">
     <thead class="text-xs uppercase bg-medium-light">
@@ -74,6 +159,7 @@
         <th scope="col" class="px-6 py-3">
           Test Data
         </th>
+         <th scope="col" class="px-6 py-3" />
       </tr>
     </thead>
     
@@ -81,12 +167,18 @@
       <%= for {test_set, ds_count, data_count} <- @test_sets do %>
         <tr Key={test_set.id} class="bg-light border-b font-medium">
           <td class="px-6 py-4">
-            <.link
-              navigate={~p"/rf/data/test_set/#{test_set.id}"}
-              class="underline hover:text-slate-500"
-            >
-              <%= test_set.name %>
-            </.link>
+            <div class="flex space-x-2">
+              <button phx-click="edit" phx-value-ts_id={test_set.id}>
+                <img src="/images/edit-button.svg" class="w-4" />
+              </button>
+              
+              <.link
+                navigate={~p"/rf/data/test_set/#{test_set.id}"}
+                class="underline hover:text-slate-500"
+              >
+                <%= test_set.name %>
+              </.link>
+            </div>
           </td>
           
           <td class="px-6 py-4">
@@ -107,6 +199,12 @@
           
           <td class="px-6 py-4">
             <%= data_count %>
+          </td>
+          
+          <td class="px-6 py-4">
+            <button phx-click="delete" phx-value-ts_id={test_set.id}>
+              <img src="/images/delete-button.svg" class="w-4" />
+            </button>
           </td>
         </tr>
       <% end %>
