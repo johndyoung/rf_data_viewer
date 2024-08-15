@@ -1,5 +1,38 @@
+<div class="ml-1 mb-6">
+  <button
+    id="create-unit-form-button"
+    phx-click={toggle_create_ui_state()}
+    data-close-form={close_create_ui_state()}
+    class="bg-medium-light text-slate-700 hover:bg-light rounded-full px-4 py-2 font-semibold"
+  >
+    Create New RF Unit
+  </button>
+</div>
+
+<div
+  id="create-new-unit-form"
+  class="hidden justify-center"
+  phx-click-away={toggle_create_ui_state()}
+>
+  <div class="absolute m-auto left-0 right-0 w-96 z-50 shadow-2xl bg-light rounded-lg">
+    <.simple_form for={@form} id="create-unit-form" phx-submit="save" phx-change="validate">
+      <.error :if={@check_errors}>
+        Please check the errors below.
+      </.error>
+      <.input field={@form[:manufacturer]} type="text" label="Manufacturer" required autofocus />
+      <.input field={@form[:name]} type="text" label="Name" required />
+      <.input field={@form[:description]} type="text" label="Description" required />
+      <:actions>
+        <.button phx-disable-with="Creating unit..." class="w-full">
+          Create RF Unit
+        </.button>
+      </:actions>
+    </.simple_form>
+  </div>
+</div>
+
 <div class="relative overflow-x-auto rounded-lg">
-  <table class="w-full text-sm text-left text-slate-700">
+  <table id="unit-table" class="w-full text-sm text-left text-slate-700">
     <thead class="text-xs uppercase bg-medium-light">
       <tr>
         <th scope="col" class="px-6 py-3">
