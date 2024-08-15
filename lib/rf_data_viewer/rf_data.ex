@@ -59,6 +59,7 @@ defmodule RFDataViewer.RFData do
         left_join: v in subquery(vswr_subquery),
         on: v.id == t.id,
         where: t.rf_unit_serial_number_id == ^serial_number_id,
+        order_by: t.name,
         preload: [serial_number: :unit],
         select: {t, coalesce(d.count, 0), coalesce(g.count + v.count, 0)}
 
@@ -117,6 +118,7 @@ defmodule RFDataViewer.RFData do
         left_join: v in subquery(vswr_subquery),
         on: v.id == t.id,
         where: t.id == ^test_set_id,
+        order_by: t.name,
         preload: [serial_number: :unit],
         select: {t, coalesce(d.count, 0), coalesce(g.count + v.count, 0)}
 

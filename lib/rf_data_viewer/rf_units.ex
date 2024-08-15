@@ -81,6 +81,7 @@ defmodule RFDataViewer.RFUnits do
         on: g.id == u.id,
         left_join: v in subquery(vswr_subquery),
         on: v.id == u.id,
+        order_by: [u.manufacturer, u.name],
         select: {
           u,
           coalesce(s.count, 0),
@@ -233,6 +234,7 @@ defmodule RFDataViewer.RFUnits do
         left_join: v in subquery(vswr_subquery),
         on: v.id == s.id,
         where: s.rf_unit_id == ^rf_unit_id,
+        order_by: s.serial_number,
         select: {
           s,
           coalesce(t.count, 0),
@@ -241,7 +243,6 @@ defmodule RFDataViewer.RFUnits do
         }
 
     Repo.all(query)
-    |> IO.inspect()
   end
 
   @doc """
