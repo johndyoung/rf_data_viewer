@@ -16,21 +16,6 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
      |> assign_form(empty_changeset)}
   end
 
-  def toggle_form_ui() do
-    JS.toggle(to: "#unit-form-container")
-    |> JS.toggle_class("blur-[2px]", to: "#unit-table")
-  end
-
-  def open_form_ui() do
-    JS.show(to: "#unit-form-container")
-    |> JS.add_class("blur-[2px]", to: "#unit-table")
-  end
-
-  def close_form_ui() do
-    JS.hide(to: "#unit-form-container")
-    |> JS.remove_class("blur-[2px]", to: "#unit-table")
-  end
-
   def handle_event("create", _params, socket) do
     # ensure we have an empty form in case user clicked edit sometime before
     empty_unit = %RFUnit{}

@@ -2,20 +2,15 @@
   <button
     id="create-unit-form-button"
     phx-click="create"
-    data-open-form={open_form_ui()}
-    data-close-form={close_form_ui()}
+    data-open-form={show_modal("unit-form-container")}
+    data-close-form={hide_modal("unit-form-container")}
     class="bg-medium-light text-slate-700 hover:bg-light rounded-full px-4 py-2 font-semibold"
   >
     Create New RF Unit
   </button>
 </div>
 
-<div
-  id="unit-form-container"
-  class="hidden justify-center"
-  phx-click-away={toggle_form_ui()}
->
-  <div class="absolute m-auto left-0 right-0 w-96 z-50 shadow-2xl bg-light rounded-lg">
+<.modal id="unit-form-container">
     <.simple_form for={@form} id="unit-form" phx-submit="save" phx-change="validate">
       <.error :if={@check_errors}>
         Please check the errors below.
@@ -29,8 +24,7 @@
         </.button>
       </:actions>
     </.simple_form>
-  </div>
-</div>
+</.modal>
 
 <div class="relative overflow-x-auto rounded-lg">
   <table id="unit-table" class="w-full text-sm text-left text-slate-700">
