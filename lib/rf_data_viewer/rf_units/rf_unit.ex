@@ -16,5 +16,6 @@ defmodule RFDataViewer.RFUnits.RFUnit do
     rf_unit
     |> cast(attrs, [:name, :manufacturer, :description])
     |> validate_required([:name, :manufacturer, :description])
+    |> unique_constraint([:name, :manufacturer])
   end
 end
