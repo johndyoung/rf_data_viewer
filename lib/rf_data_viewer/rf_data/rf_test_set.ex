@@ -18,5 +18,6 @@ defmodule RFDataViewer.RFData.RFTestSet do
     rf_test_set
     |> cast(attrs, [:name, :description, :location, :date, :rf_unit_serial_number_id])
     |> validate_required([:name, :description, :location, :date, :rf_unit_serial_number_id])
+    |> unique_constraint([:name, :location, :date, :rf_unit_serial_number_id])
   end
 end

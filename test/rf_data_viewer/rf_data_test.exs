@@ -1,7 +1,7 @@
 defmodule RFDataViewer.RFDataTest do
   use RFDataViewer.DataCase
-
   alias RFDataViewer.RFData
+  alias RFDataViewer.RFUnitsFixtures
 
   describe "rf_test_set" do
     alias RFDataViewer.RFData.RFTestSet
@@ -40,6 +40,44 @@ defmodule RFDataViewer.RFDataTest do
     test "create_rf_test_set/1 with invalid data returns error changeset" do
       rf_sn = RFDataViewer.RFUnitsFixtures.rf_unit_serial_number_fixture()
       assert {:error, %Ecto.Changeset{}} = RFData.create_rf_test_set(rf_sn, @invalid_attrs)
+    end
+
+    test "create_rf_test_set/1 name, location, date, and rf_unit_serial_number_id unique constraint" do
+      sn = RFUnitsFixtures.rf_unit_serial_number_fixture()
+
+      valid = %{
+        name: "name",
+        date: Date.utc_today(),
+        description: "desc",
+        location: "location"
+      }
+
+      assert {:ok, %RFTestSet{}} =
+               RFData.create_rf_test_set(sn, valid)
+
+      diff_name = Map.replace(valid, :name, "#{valid.name} diff")
+
+      assert {:ok, %RFTestSet{}} =
+               RFData.create_rf_test_set(sn, diff_name)
+
+      diff_location = Map.replace(valid, :location, "#{valid.location} diff")
+
+      assert {:ok, %RFTestSet{}} =
+               RFData.create_rf_test_set(sn, diff_location)
+
+      diff_date = Map.replace(valid, :date, Date.add(valid.date, 1))
+
+      assert {:ok, %RFTestSet{}} =
+               RFData.create_rf_test_set(sn, diff_date)
+
+      assert {:error, %Ecto.Changeset{}} =
+               RFData.create_rf_test_set(sn, valid)
+
+      {:ok, unit} = RFDataViewer.RFUnits.create_rf_unit(%{name: "random", description: "random", manufacturer: "random"})
+      {:ok, diff_sn} = RFDataViewer.RFUnits.create_rf_unit_serial_number(unit, %{serial_number: "#{sn.serial_number} diff"})
+
+      assert {:ok, %RFTestSet{}} =
+               RFData.create_rf_test_set(diff_sn, valid)
     end
 
     test "update_rf_test_set/2 with valid data updates the rf_test_set" do
@@ -98,9 +136,16 @@ defmodule RFDataViewer.RFDataTest do
 
     test "create_rf_data_set/1 with valid data creates a rf_data_set" do
       rf_test_set = RFDataViewer.RFDataFixtures.rf_test_set_fixture()
-      valid_attrs = %{name: "some name", date: ~U[2024-08-11 01:05:00Z], description: "some description"}
 
-      assert {:ok, %RFDataSet{} = rf_data_set} = RFData.create_rf_data_set(rf_test_set, valid_attrs)
+      valid_attrs = %{
+        name: "some name",
+        date: ~U[2024-08-11 01:05:00Z],
+        description: "some description"
+      }
+
+      assert {:ok, %RFDataSet{} = rf_data_set} =
+               RFData.create_rf_data_set(rf_test_set, valid_attrs)
+
       assert rf_data_set.name == "some name"
       assert rf_data_set.date == ~U[2024-08-11 01:05:00Z]
       assert rf_data_set.description == "some description"
@@ -113,9 +158,16 @@ defmodule RFDataViewer.RFDataTest do
 
     test "update_rf_data_set/2 with valid data updates the rf_data_set" do
       rf_data_set = rf_data_set_fixture()
-      update_attrs = %{name: "some updated name", date: ~U[2024-08-12 01:05:00Z], description: "some updated description"}
 
-      assert {:ok, %RFDataSet{} = rf_data_set} = RFData.update_rf_data_set(rf_data_set, update_attrs)
+      update_attrs = %{
+        name: "some updated name",
+        date: ~U[2024-08-12 01:05:00Z],
+        description: "some updated description"
+      }
+
+      assert {:ok, %RFDataSet{} = rf_data_set} =
+               RFData.update_rf_data_set(rf_data_set, update_attrs)
+
       assert rf_data_set.name == "some updated name"
       assert rf_data_set.date == ~U[2024-08-12 01:05:00Z]
       assert rf_data_set.description == "some updated description"
