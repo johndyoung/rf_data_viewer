@@ -12,7 +12,7 @@ defmodule RFDataViewer.RFDataTest do
 
     test "list_rf_test_set/0 returns all rf_test_set" do
       rf_test_set = rf_test_set_fixture()
-      assert RFData.list_rf_test_set() == [rf_test_set]
+      assert RFData.list_rf_test_sets() == [rf_test_set]
     end
 
     test "get_rf_test_set!/1 returns the rf_test_set with given id" do
@@ -74,7 +74,7 @@ defmodule RFDataViewer.RFDataTest do
 
     test "list_rf_data_set/0 returns all rf_data_set" do
       rf_data_set = rf_data_set_fixture()
-      assert RFData.list_rf_data_set() == [rf_data_set]
+      assert RFData.list_rf_data_sets() == [rf_data_set]
     end
 
     test "get_rf_data_set!/1 returns the rf_data_set with given id" do
