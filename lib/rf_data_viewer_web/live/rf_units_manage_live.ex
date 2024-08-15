@@ -87,7 +87,7 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
 
     case response do
       {:ok, unit} ->
-        # entries from RF.Units.list_rf_units_with_counts/0 are of the form {unit, sn_count, ts_count, ds_count, data_count}
+        # entries from RFUnits.list_rf_units_with_counts/0 are of the form {unit, sn_count, ts_count, ds_count, data_count}
         unit_tuple = {unit, 0, 0, 0, 0}
         empty_unit = %RFUnit{}
         empty_changeset = RFUnits.change_rf_unit(empty_unit)

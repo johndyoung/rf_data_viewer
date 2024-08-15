@@ -89,7 +89,7 @@ defmodule RFDataViewerWeb.RFUnitsUnitLive do
 
     case response do
       {:ok, sn} ->
-        # entries from RF.Units.get_rf_unit_serial_numbers_with_counts/1 are of the form {sn, ts_count, ds_count, data_count}
+        # entries from RFUnits.get_rf_unit_serial_numbers_with_counts/1 are of the form {sn, ts_count, ds_count, data_count}
         sn_tuple = {sn, 0, 0, 0}
         empty_sn = %RFUnitSerialNumber{}
         empty_changeset = RFUnits.change_rf_unit_serial_number(empty_sn)
