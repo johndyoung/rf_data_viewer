@@ -45,10 +45,14 @@ window.liveSocket = liveSocket
 // TODO: organize resource specific functionality better
 // RESOURCE: /rf/units/manage
 
-// listen for a successful "rf-unit-created" event signaling that a new RF unit 
-// has been created and user is done with the creation form so that we can
-// move out of the create unit UI state
-window.addEventListener("phx:rf-unit-created", (e) => {
+// ensure RF unit form is opened on detected server event
+window.addEventListener("phx:rf-unit-open-form", (e) => {
+  let el = document.getElementById("create-unit-form-button")
+  liveSocket.execJS(el, el.getAttribute("data-open-form"))
+})
+
+// ensure RF unit form is closed on detected server event
+window.addEventListener("phx:rf-unit-close-form", (e) => {
   let el = document.getElementById("create-unit-form-button")
   liveSocket.execJS(el, el.getAttribute("data-close-form"))
 })

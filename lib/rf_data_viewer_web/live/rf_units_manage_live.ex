@@ -5,39 +5,85 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
 
   def mount(_params, _session, socket) do
     rf_units = RFUnits.list_rf_units_with_counts()
-    changeset = RFUnits.change_rf_unit(%RFUnit{})
+    empty_unit = %RFUnit{}
+    empty_changeset = RFUnits.change_rf_unit(empty_unit)
 
     {:ok,
      socket
-     |> assign(%{
-       rf_units: rf_units,
-       check_errors: false
-     })
-     |> assign_form(changeset)}
+     |> assign(:rf_units, rf_units)
+     |> assign(:check_errors, false)
+     |> assign_edit_unit(empty_unit)
+     |> assign_form(empty_changeset)}
   end
 
-  def toggle_create_ui_state() do
-    JS.toggle(to: "#create-new-unit-form")
+  def toggle_form_ui() do
+    JS.toggle(to: "#unit-form-container")
     |> JS.toggle_class("blur-[2px]", to: "#unit-table")
   end
 
-  def close_create_ui_state() do
-    JS.hide(to: "#create-new-unit-form")
+  def open_form_ui() do
+    JS.show(to: "#unit-form-container")
+    |> JS.add_class("blur-[2px]", to: "#unit-table")
+  end
+
+  def close_form_ui() do
+    JS.hide(to: "#unit-form-container")
     |> JS.remove_class("blur-[2px]", to: "#unit-table")
   end
 
-  def handle_event("save", %{"unit" => unit_params}, %{assigns: %{rf_units: units}} = socket) do
-    case RFUnits.create_rf_unit(unit_params) do
+  def handle_event("create", _params, socket) do
+    # ensure we have an empty form in case user clicked edit sometime before
+    empty_unit = %RFUnit{}
+    empty_changeset = RFUnits.change_rf_unit(empty_unit)
+
+    {:noreply,
+     socket
+     |> assign_form(empty_changeset)
+     |> assign_edit_unit(empty_unit)
+     |> push_event("rf-unit-open-form", Map.new())}
+  end
+
+  def handle_event("edit", %{"rf_unit_id" => id}, socket) do
+    unit = RFUnits.get_rf_unit!(id)
+    unit_changeset = RFUnits.change_rf_unit(unit)
+
+    {:noreply,
+     socket
+     |> assign_form(unit_changeset)
+     |> assign_edit_unit(unit)
+     |> push_event("rf-unit-open-form", %{id: id})}
+  end
+
+  def handle_event(
+        "save",
+        %{"unit" => unit_params},
+        %{assigns: %{edit_rf_unit: edit_unit}} = socket
+      ) do
+    # if edit_unit contains an RF unit struct with an ID, we're updating it; otherwise, we're making a new RF unit.
+    response =
+      case edit_unit.id do
+        nil -> RFUnits.create_rf_unit(unit_params)
+        id when is_integer(id) -> RFUnits.update_rf_unit(edit_unit, unit_params)
+      end
+
+    case response do
       {:ok, unit} ->
         # entries from RF.Units.list_rf_units_with_counts/0 are of the form {unit, sn_count, ts_count, ds_count, data_count}
         unit_tuple = {unit, 0, 0, 0, 0}
-        empty_changeset = RFUnits.change_rf_unit(%RFUnit{})
+        empty_unit = %RFUnit{}
+        empty_changeset = RFUnits.change_rf_unit(empty_unit)
+
+        # currently adding new units to head of list... for updates, just re-query.
+        socket =
+          if is_nil(edit_unit.id),
+            do: update(socket, :rf_units, fn units -> [unit_tuple | units] end),
+            else: assign(socket, :rf_units, RFUnits.list_rf_units_with_counts())
 
         {:noreply,
          socket
-         |> assign(:rf_units, [unit_tuple | units])
+         |> assign_edit_unit(empty_unit)
          |> assign_form(empty_changeset)
-         |> push_event("rf-unit-created", %{id: unit.id})}
+         |> push_event("rf-unit-close-form", %{id: unit.id})}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, socket |> assign(check_errors: true) |> assign_form(changeset)}
@@ -48,6 +94,8 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
     changeset = RFUnits.change_rf_unit(%RFUnit{}, unit_params)
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end
+
+  defp assign_edit_unit(socket, %RFUnit{} = unit), do: assign(socket, :edit_rf_unit, unit)
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     form = to_form(changeset, as: "unit")

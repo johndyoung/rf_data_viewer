@@ -1,8 +1,9 @@
 <div class="ml-1 mb-6">
   <button
     id="create-unit-form-button"
-    phx-click={toggle_create_ui_state()}
-    data-close-form={close_create_ui_state()}
+    phx-click="create"
+    data-open-form={open_form_ui()}
+    data-close-form={close_form_ui()}
     class="bg-medium-light text-slate-700 hover:bg-light rounded-full px-4 py-2 font-semibold"
   >
     Create New RF Unit
@@ -10,21 +11,21 @@
 </div>
 
 <div
-  id="create-new-unit-form"
+  id="unit-form-container"
   class="hidden justify-center"
-  phx-click-away={toggle_create_ui_state()}
+  phx-click-away={toggle_form_ui()}
 >
   <div class="absolute m-auto left-0 right-0 w-96 z-50 shadow-2xl bg-light rounded-lg">
-    <.simple_form for={@form} id="create-unit-form" phx-submit="save" phx-change="validate">
+    <.simple_form for={@form} id="unit-form" phx-submit="save" phx-change="validate">
       <.error :if={@check_errors}>
         Please check the errors below.
       </.error>
-      <.input field={@form[:manufacturer]} type="text" label="Manufacturer" required autofocus />
+       <.input field={@form[:manufacturer]} type="text" label="Manufacturer" required autofocus />
       <.input field={@form[:name]} type="text" label="Name" required />
       <.input field={@form[:description]} type="text" label="Description" required />
       <:actions>
-        <.button phx-disable-with="Creating unit..." class="w-full">
-          Create RF Unit
+        <.button phx-disable-with="Saving unit..." class="w-full">
+          Save RF Unit
         </.button>
       </:actions>
     </.simple_form>
@@ -65,9 +66,18 @@
       <%= for {unit, sn_count, ts_count, _, data_count} <- @rf_units do %>
         <tr Key={unit.id} class="bg-light border-b font-medium">
           <td class="px-6 py-4">
-            <.link navigate={~p"/rf/units/unit/#{unit.id}"} class="underline hover:text-slate-500">
-              <%= unit.name %>
-            </.link>
+            <div class="flex space-x-2">
+              <button phx-click="edit" phx-value-rf_unit_id={unit.id}>
+                <img src="/images/edit-button.svg" class="w-4" />
+              </button>
+              
+              <.link
+                navigate={~p"/rf/units/unit/#{unit.id}"}
+                class="underline hover:text-slate-500"
+              >
+                <%= unit.name %>
+              </.link>
+            </div>
           </td>
           
           <td class="px-6 py-4">
