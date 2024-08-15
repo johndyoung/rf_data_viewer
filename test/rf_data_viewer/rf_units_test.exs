@@ -130,7 +130,7 @@ defmodule RFDataViewer.RFUnitsTest do
                RFUnits.create_rf_unit_serial_number(rf_unit, @invalid_attrs)
     end
 
-    test "create_rf_unit_serial_number/1 serial_number and rf_unique_id unique constraint" do
+    test "create_rf_unit_serial_number/1 serial_number and rf_unit_id unique constraint" do
       rf_unit = rf_unit_fixture()
       valid_attrs = %{serial_number: "some serial_number"}
 

@@ -4,7 +4,7 @@ defmodule RFDataViewer.RFData.RFTestSet do
 
   schema "rf_test_set" do
     field :name, :string
-    field :date, :utc_datetime
+    field :date, :date
     field :description, :string
     field :location, :string
     belongs_to :serial_number, RFDataViewer.RFUnits.RFUnitSerialNumber, foreign_key: :rf_unit_serial_number_id

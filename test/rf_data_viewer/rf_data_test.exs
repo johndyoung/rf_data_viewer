@@ -22,11 +22,17 @@ defmodule RFDataViewer.RFDataTest do
 
     test "create_rf_test_set/1 with valid data creates a rf_test_set" do
       rf_sn = RFDataViewer.RFUnitsFixtures.rf_unit_serial_number_fixture()
-      valid_attrs = %{name: "some name", date: ~U[2024-08-11 00:57:00Z], description: "some description", location: "some location"}
+
+      valid_attrs = %{
+        name: "some name",
+        date: ~D[2024-08-11],
+        description: "some description",
+        location: "some location"
+      }
 
       assert {:ok, %RFTestSet{} = rf_test_set} = RFData.create_rf_test_set(rf_sn, valid_attrs)
       assert rf_test_set.name == "some name"
-      assert rf_test_set.date == ~U[2024-08-11 00:57:00Z]
+      assert rf_test_set.date == ~D[2024-08-11]
       assert rf_test_set.description == "some description"
       assert rf_test_set.location == "some location"
     end
@@ -38,11 +44,19 @@ defmodule RFDataViewer.RFDataTest do
 
     test "update_rf_test_set/2 with valid data updates the rf_test_set" do
       rf_test_set = rf_test_set_fixture()
-      update_attrs = %{name: "some updated name", date: ~U[2024-08-12 00:57:00Z], description: "some updated description", location: "some updated location"}
 
-      assert {:ok, %RFTestSet{} = rf_test_set} = RFData.update_rf_test_set(rf_test_set, update_attrs)
+      update_attrs = %{
+        name: "some updated name",
+        date: ~D[2024-08-12],
+        description: "some updated description",
+        location: "some updated location"
+      }
+
+      assert {:ok, %RFTestSet{} = rf_test_set} =
+               RFData.update_rf_test_set(rf_test_set, update_attrs)
+
       assert rf_test_set.name == "some updated name"
-      assert rf_test_set.date == ~U[2024-08-12 00:57:00Z]
+      assert rf_test_set.date == ~D[2024-08-12]
       assert rf_test_set.description == "some updated description"
       assert rf_test_set.location == "some updated location"
     end
