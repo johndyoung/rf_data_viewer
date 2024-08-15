@@ -56,7 +56,7 @@
       <%= for {sn, ts_count, _, data_count} <- @serial_numbers do %>
         <tr Key={sn.id} class="bg-light border-b font-medium">
           <td class="px-6 py-4">
-            <.link href={~p"/rf/units/sn/#{sn.id}"} class="underline hover:text-slate-500"><%= sn.serial_number %></.link>
+            <.link navigate={~p"/rf/units/sn/#{sn.id}"} class="underline hover:text-slate-500"><%= sn.serial_number %></.link>
           </td>
           
           <td class="px-6 py-4">

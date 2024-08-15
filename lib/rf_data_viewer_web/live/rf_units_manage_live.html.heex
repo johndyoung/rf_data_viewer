@@ -32,7 +32,7 @@
       <%= for {unit, sn_count, ts_count, _, data_count} <- @rf_units do %>
         <tr Key={unit.id} class="bg-light border-b font-medium">
           <td class="px-6 py-4">
-            <.link href={~p"/rf/units/unit/#{unit.id}"} class="underline hover:text-slate-500">
+            <.link navigate={~p"/rf/units/unit/#{unit.id}"} class="underline hover:text-slate-500">
               <%= unit.name %>
             </.link>
           </td>

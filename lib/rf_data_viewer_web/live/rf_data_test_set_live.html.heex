@@ -36,7 +36,7 @@
         
         <td class="px-6 py-4">
           <.link
-            href={~p"/rf/units/unit/#{@test_set.serial_number.rf_unit_id}"}
+            navigate={~p"/rf/units/unit/#{@test_set.serial_number.rf_unit_id}"}
             class="underline hover:text-slate-500"
           >
             <%= @test_set.serial_number.unit.name %>
@@ -49,7 +49,7 @@
         
         <td class="px-6 py-4">
           <.link
-            href={~p"/rf/units/sn/#{@test_set.serial_number.id}"}
+            navigate={~p"/rf/units/sn/#{@test_set.serial_number.id}"}
             class="underline hover:text-slate-500"
           >
             <%= @test_set.serial_number.serial_number %>
@@ -99,7 +99,7 @@
         <tr Key={data_set.id} class="bg-light border-b font-medium">
           <td class="px-6 py-4">
             <.link
-              href={~p"/rf/data/data_set/#{data_set.id}"}
+              navigate={~p"/rf/data/data_set/#{data_set.id}"}
               class="underline hover:text-slate-500"
             >
               <%= data_set.name %>

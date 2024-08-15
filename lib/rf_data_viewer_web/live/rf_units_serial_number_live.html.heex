@@ -28,7 +28,7 @@
         
         <td class="px-6 py-4">
           <.link
-            href={~p"/rf/units/unit/#{@sn.rf_unit_id}"}
+            navigate={~p"/rf/units/unit/#{@sn.rf_unit_id}"}
             class="underline hover:text-slate-500"
           >
             <%= @sn.unit.name %>
@@ -82,7 +82,7 @@
         <tr Key={test_set.id} class="bg-light border-b font-medium">
           <td class="px-6 py-4">
             <.link
-              href={~p"/rf/data/test_set/#{test_set.id}"}
+              navigate={~p"/rf/data/test_set/#{test_set.id}"}
               class="underline hover:text-slate-500"
             >
               <%= test_set.name %>
