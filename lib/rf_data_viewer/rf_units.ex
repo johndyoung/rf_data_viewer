@@ -162,6 +162,22 @@ defmodule RFDataViewer.RFUnits do
   end
 
   @doc """
+  Deletes a rf_unit by id.
+
+  ## Examples
+
+      iex> delete_rf_unit_id(1)
+      {:ok, %RFUnit{}}
+
+      iex> delete_rf_unit(1)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_rf_unit_by_id(id) do
+    Repo.delete(%RFUnit{id: id})
+  end
+
+  @doc """
   Returns an `%Ecto.Changeset{}` for tracking rf_unit changes.
 
   ## Examples

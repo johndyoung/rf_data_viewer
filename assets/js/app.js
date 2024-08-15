@@ -46,13 +46,13 @@ window.liveSocket = liveSocket
 // RESOURCE: /rf/units/manage
 
 // ensure RF unit form is opened on detected server event
-window.addEventListener("phx:rf-unit-open-form", (e) => {
-  let el = document.getElementById("create-unit-form-button")
-  liveSocket.execJS(el, el.getAttribute("data-open-form"))
+window.addEventListener("phx:rf-unit-open-modal", (e) => {
+  let el = document.getElementById("modal-control")
+  liveSocket.execJS(el, el.getAttribute("data-open-modal"))
 })
 
 // ensure RF unit form is closed on detected server event
-window.addEventListener("phx:rf-unit-close-form", (e) => {
-  let el = document.getElementById("create-unit-form-button")
-  liveSocket.execJS(el, el.getAttribute("data-close-form"))
+window.addEventListener("phx:rf-unit-close-modal", (e) => {
+  let el = document.getElementById("modal-control")
+  liveSocket.execJS(el, el.getAttribute("data-close-modal"))
 })

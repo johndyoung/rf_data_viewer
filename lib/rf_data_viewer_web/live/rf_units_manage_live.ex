@@ -12,6 +12,7 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
      socket
      |> assign(:rf_units, rf_units)
      |> assign(:check_errors, false)
+     |> assign_modal_id("")
      |> assign_edit_unit(empty_unit)
      |> assign_form(empty_changeset)}
   end
@@ -25,7 +26,7 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
      socket
      |> assign_form(empty_changeset)
      |> assign_edit_unit(empty_unit)
-     |> push_event("rf-unit-open-form", Map.new())}
+     |> push_open_modal("unit-form-container")}
   end
 
   def handle_event("edit", %{"rf_unit_id" => id}, socket) do
@@ -36,7 +37,40 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
      socket
      |> assign_form(unit_changeset)
      |> assign_edit_unit(unit)
-     |> push_event("rf-unit-open-form", %{id: id})}
+     |> push_open_modal("unit-form-container")}
+  end
+
+  def handle_event("delete", %{"rf_unit_id" => id}, socket) do
+    unit = RFUnits.get_rf_unit!(id)
+
+    {:noreply,
+     socket
+     |> assign_edit_unit(unit)
+     |> push_open_modal("delete-rf-unit")}
+  end
+
+  def handle_event("confirm_delete", %{"rf_unit_id" => id}, socket) do
+    case RFUnits.delete_rf_unit_by_id(String.to_integer(id)) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> assign(:rf_units, RFUnits.list_rf_units_with_counts())
+         |> assign_edit_unit(%RFUnit{})
+         |> push_close_modal("delete-rf-unit")}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        changeset.errors
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to delete RF unit.")}
+    end
+  end
+
+  def handle_event("cancel_delete", _params, socket) do
+    {:noreply,
+     socket
+     |> assign_edit_unit(%RFUnit{})
+     |> push_close_modal("delete-rf-unit")}
   end
 
   def handle_event(
@@ -68,7 +102,7 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
          socket
          |> assign_edit_unit(empty_unit)
          |> assign_form(empty_changeset)
-         |> push_event("rf-unit-close-form", %{id: unit.id})}
+         |> push_close_modal("unit-form-container")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, socket |> assign(check_errors: true) |> assign_form(changeset)}
@@ -79,6 +113,20 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
     changeset = RFUnits.change_rf_unit(%RFUnit{}, unit_params)
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end
+
+  defp assign_modal_id(socket, modal_id), do: assign(socket, :modal_id, modal_id)
+
+  defp push_open_modal(socket, modal_id),
+    do:
+      socket
+      |> assign_modal_id(modal_id)
+      |> push_event("rf-unit-open-modal", Map.new())
+
+  defp push_close_modal(socket, modal_id),
+    do:
+      socket
+      |> assign_modal_id(modal_id)
+      |> push_event("rf-unit-close-modal", Map.new())
 
   defp assign_edit_unit(socket, %RFUnit{} = unit), do: assign(socket, :edit_rf_unit, unit)
 

@@ -37,7 +37,7 @@ defmodule RFDataViewer.RFUnitsTest do
       assert {:error, %Ecto.Changeset{}} = RFUnits.create_rf_unit(@invalid_attrs)
     end
 
-    test "create_rf_unit/name and manufacturer unique constraint" do
+    test "create_rf_unit/0 name and manufacturer unique constraint" do
       rf_unit = rf_unit_fixture()
 
       diff_name = %{
@@ -81,6 +81,12 @@ defmodule RFDataViewer.RFUnitsTest do
     test "delete_rf_unit/1 deletes the rf_unit" do
       rf_unit = rf_unit_fixture()
       assert {:ok, %RFUnit{}} = RFUnits.delete_rf_unit(rf_unit)
+      assert_raise Ecto.NoResultsError, fn -> RFUnits.get_rf_unit!(rf_unit.id) end
+    end
+
+    test "delete_rf_unit_by_id/1 deletes the rf_unit using the primary key" do
+      rf_unit = rf_unit_fixture()
+      assert {:ok, %RFUnit{}} = RFUnits.delete_rf_unit_by_id(rf_unit.id)
       assert_raise Ecto.NoResultsError, fn -> RFUnits.get_rf_unit!(rf_unit.id) end
     end
 
