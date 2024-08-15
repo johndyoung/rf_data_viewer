@@ -37,7 +37,7 @@ defmodule RFDataViewer.RFUnitsTest do
       assert {:error, %Ecto.Changeset{}} = RFUnits.create_rf_unit(@invalid_attrs)
     end
 
-    test "create_rf_unit/0 name and manufacturer unique constraint" do
+    test "create_rf_unit/1 name and manufacturer unique constraint" do
       rf_unit = rf_unit_fixture()
 
       diff_name = %{
@@ -128,6 +128,24 @@ defmodule RFDataViewer.RFUnitsTest do
 
       assert {:error, %Ecto.Changeset{}} =
                RFUnits.create_rf_unit_serial_number(rf_unit, @invalid_attrs)
+    end
+
+    test "create_rf_unit_serial_number/1 serial_number and rf_unique_id unique constraint" do
+      rf_unit = rf_unit_fixture()
+      valid_attrs = %{serial_number: "some serial_number"}
+
+      assert {:ok, %RFUnitSerialNumber{}} =
+               RFUnits.create_rf_unit_serial_number(rf_unit, valid_attrs)
+
+      diff = %{serial_number: "#{valid_attrs.serial_number} diff"}
+
+      assert {:ok, %RFUnitSerialNumber{}} =
+               RFUnits.create_rf_unit_serial_number(rf_unit, diff)
+
+      same = %{serial_number: valid_attrs.serial_number}
+
+
+      assert {:error, %Ecto.Changeset{}} = RFUnits.create_rf_unit_serial_number(rf_unit, same)
     end
 
     test "update_rf_unit_serial_number/2 with valid data updates the rf_unit_serial_number" do

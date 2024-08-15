@@ -15,5 +15,6 @@ defmodule RFDataViewer.RFUnits.RFUnitSerialNumber do
     rf_unit_serial_number
     |> cast(attrs, [:serial_number, :rf_unit_id])
     |> validate_required([:serial_number, :rf_unit_id])
+    |> unique_constraint([:serial_number, :rf_unit_id])
   end
 end
