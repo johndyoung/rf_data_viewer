@@ -505,4 +505,15 @@ defmodule RFDataViewer.UsersTest do
       refute inspect(%User{password: "123456"}) =~ "password: \"123456\""
     end
   end
+
+  describe "convert_time_to_user_time/2" do
+    test "ensure timezone conversion" do
+      user = %User{timezone: "America/New_York"}
+      utc_time = DateTime.utc_now()
+      local_time = Users.convert_time_to_user_time(user, utc_time)
+
+      assert DateTime.to_string(utc_time) != DateTime.to_string(local_time)
+      assert DateTime.compare(utc_time, local_time) == :eq
+    end
+  end
 end

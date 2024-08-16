@@ -96,6 +96,36 @@ defmodule RFDataViewer.Users do
   ## Settings
 
   @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user general settings.
+
+  ## Examples
+
+      iex> change_user_settings(user)
+      %Ecto.Changeset{data: %User{}}
+
+  """
+  def change_user_settings(user, attrs \\ %{}) do
+    User.settings_changeset(user, attrs)
+  end
+
+  @doc """
+  Updates general user settings.
+
+  ## Examples
+
+      iex> change_user_settings(user)
+      {:ok, %User{}}
+
+      iex> change_user_settings(user)
+      {:error, %Ecto.Changeset{}}
+  """
+  def update_user_settings(user, attrs) do
+    user
+    |> change_user_settings(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
   Returns an `%Ecto.Changeset{}` for changing the user email.
 
   ## Examples
@@ -349,5 +379,19 @@ defmodule RFDataViewer.Users do
       {:ok, %{user: user}} -> {:ok, user}
       {:error, :user, changeset, _} -> {:error, changeset}
     end
+  end
+
+  @doc """
+  Converts UTC time to the time based on user's settings configured timezone.
+
+  ## Example
+      iex> convert_time_to_user_time(%User{}, %DateTime{})
+      %DateTime{}
+
+      iex> convert_time_to_user_time(%User{}, %DateTime{})
+      {:error, term()}
+  """
+  def convert_time_to_user_time(%User{} = user, time) do
+    Timex.to_datetime(time, user.timezone)
   end
 end

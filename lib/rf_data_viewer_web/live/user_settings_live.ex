@@ -1,6 +1,6 @@
 defmodule RFDataViewerWeb.UserSettingsLive do
   use RFDataViewerWeb, :live_view
-
+  use Timex
   alias RFDataViewer.Users
 
   def render(assigns) do
@@ -11,6 +11,29 @@ defmodule RFDataViewerWeb.UserSettingsLive do
     </.header>
 
     <div class="space-y-6 divide-y">
+      <div>
+        <.simple_form
+          for={@settings_form}
+          id="settings_form"
+          phx-submit="update_settings"
+          phx-change="validate_settings"
+        >
+          <.input
+            field={@settings_form[:timezone]}
+            type="select"
+            label="Timezone"
+            required
+            options={
+              for locale_name <- @timezones do
+                locale_name
+              end
+            }
+          />
+          <:actions>
+            <.button phx-disable-with="Changing...">Update Settings</.button>
+          </:actions>
+        </.simple_form>
+      </div>
       <div>
         <.simple_form
           for={@email_form}
@@ -88,14 +111,19 @@ defmodule RFDataViewerWeb.UserSettingsLive do
 
   def mount(_params, _session, socket) do
     user = socket.assigns.current_user
+    settings_changeset = Users.change_user_settings(user)
     email_changeset = Users.change_user_email(user)
     password_changeset = Users.change_user_password(user)
 
+    timezones = get_timezone_locale_list()
+
     socket =
       socket
+      |> assign(:timezones, timezones)
       |> assign(:current_password, nil)
       |> assign(:email_form_current_password, nil)
       |> assign(:current_email, user.email)
+      |> assign(:settings_form, to_form(settings_changeset))
       |> assign(:email_form, to_form(email_changeset))
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:trigger_submit, false)
@@ -135,6 +163,31 @@ defmodule RFDataViewerWeb.UserSettingsLive do
     end
   end
 
+  def handle_event("validate_settings", params, socket) do
+    %{"user" => user_params} = params
+
+    settings_form =
+      socket.assigns.current_user
+      |> Users.change_user_settings(user_params)
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    {:noreply, assign(socket, settings_form: settings_form)}
+  end
+
+  def handle_event("update_settings", params, socket) do
+    %{"user" => user_params} = params
+    user = socket.assigns.current_user
+
+    case Users.update_user_settings(user, user_params) do
+      {:ok, _} ->
+        {:noreply, socket |> put_flash(:info, "Settings updated!")}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, :settings_form, to_form(Map.put(changeset, :action, :insert)))}
+    end
+  end
+
   def handle_event("validate_password", params, socket) do
     %{"current_password" => password, "user" => user_params} = params
 
@@ -163,5 +216,16 @@ defmodule RFDataViewerWeb.UserSettingsLive do
       {:error, changeset} ->
         {:noreply, assign(socket, password_form: to_form(changeset))}
     end
+  end
+
+  defp get_timezone_locale_list() do
+    now = DateTime.utc_now()
+
+    Tzdata.zone_list()
+    |> Enum.map(fn zone ->
+      tzinfo = Timex.Timezone.get(zone, now)
+      tzinfo.full_name
+    end)
+    |> Enum.uniq()
   end
 end

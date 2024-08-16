@@ -8,6 +8,7 @@ defmodule RFDataViewer.Users.User do
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
+    field :timezone, :string
 
     timestamps(type: :utc_datetime)
   end
@@ -84,6 +85,15 @@ defmodule RFDataViewer.Users.User do
     else
       changeset
     end
+  end
+
+  @doc """
+  A user changeset for changing general settings.
+  """
+  def settings_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:timezone])
+    |> validate_required([:timezone])
   end
 
   @doc """
