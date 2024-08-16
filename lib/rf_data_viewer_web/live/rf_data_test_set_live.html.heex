@@ -111,6 +111,10 @@
         </th>
         
         <th scope="col" class="px-6 py-3">
+          Test Set
+        </th>
+        
+        <th scope="col" class="px-6 py-3">
           Data Sets
         </th>
         
@@ -146,6 +150,10 @@
           >
             <%= @test_set.serial_number.serial_number %>
           </.link>
+        </td>
+        
+        <td class="px-6 py-4">
+          <%= "#{@test_set.name} @ #{@test_set.location}" %>
         </td>
         
         <td class="px-6 py-4">
