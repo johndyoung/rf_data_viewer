@@ -13,6 +13,7 @@ defmodule RFDataViewerWeb.RFUnitsUnitLive do
      socket
      |> assign(%{unit: unit, serial_numbers: data})
      |> assign(:check_errors, false)
+     |> assign(:delete_data, [])
      |> assign_modal_id("")
      |> assign_edit_sn(empty_sn)
      |> assign_form(empty_changeset)}
@@ -44,13 +45,20 @@ defmodule RFDataViewerWeb.RFUnitsUnitLive do
   def handle_event("delete", %{"sn_id" => id}, socket) do
     sn = RFUnits.get_rf_unit_serial_number!(id)
 
+    delete_data = [
+      {"Manufacturer", socket.assigns.unit.manufacturer},
+      {"Name", socket.assigns.unit.name},
+      {"Serial Number", sn.serial_number}
+    ]
+
     {:noreply,
      socket
      |> assign_edit_sn(sn)
+     |> assign(:delete_data, delete_data)
      |> push_open_modal("delete-sn")}
   end
 
-  def handle_event("confirm_delete", %{"sn_id" => id}, socket) do
+  def handle_event("confirm_delete", %{"data" => id}, socket) do
     sn_struct = RFUnits.get_rf_unit_serial_number!(String.to_integer(id))
     case RFUnits.delete_rf_unit_serial_number(sn_struct) do
       {:ok, sn} ->

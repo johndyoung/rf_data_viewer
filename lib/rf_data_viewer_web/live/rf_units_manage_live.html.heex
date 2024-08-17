@@ -1,19 +1,16 @@
 <.modal_control modal_id={@modal_id} />
-<div class="ml-1 mb-6">
-  <button
-    phx-click="create"
-    class="bg-medium-light text-slate-700 hover:bg-light rounded-full px-4 py-2 font-semibold"
-  >
-    Create New RF Unit
-  </button>
-</div>
-
+<.confirm_delete
+  id="delete-rf-unit"
+  delete_type="RF Unit"
+  delete_data={@edit_rf_unit.id}
+  data={@delete_data}
+/>
 <.modal id="unit-form-container">
   <.simple_form for={@form} id="unit-form" phx-submit="save" phx-change="validate">
     <.error :if={@check_errors}>
       Please check the errors below.
     </.error>
-    <.input field={@form[:manufacturer]} type="text" label="Manufacturer" required autofocus />
+     <.input field={@form[:manufacturer]} type="text" label="Manufacturer" required autofocus />
     <.input field={@form[:name]} type="text" label="Name" required />
     <.input field={@form[:description]} type="text" label="Description" required />
     <:actions>
@@ -24,44 +21,14 @@
   </.simple_form>
 </.modal>
 
-<.modal id="delete-rf-unit">
-  <p class="font-bold text-center pb-3">Are you sure you wish to delete the following RF Unit?</p>
-  
-  <dl class="divide-y grid grid-cols-2 justify-center space-x-3">
-    <dt class="font-semibold text-right">Manufacturer:</dt>
-    
-    <dd><%= @edit_rf_unit.manufacturer %></dd>
-    
-    <dt class="font-semibold text-right">Name:</dt>
-    
-    <dd><%= @edit_rf_unit.name %></dd>
-    
-    <dt class="font-semibold text-right">Description:</dt>
-    
-    <dd><%= @edit_rf_unit.description %></dd>
-  </dl>
-  
-  <p class="font-extrabold text-center py-3">
-    All data associated with this unit will be deleted.
-  </p>
-  
-  <div class="grid grid-cols-2">
-    <button
-      phx-click="confirm_delete"
-      phx-value-rf_unit_id={@edit_rf_unit.id}
-      class="bg-medium-light text-slate-700 hover:bg-medium rounded-full px-4 py-2 mx-2 font-semibold"
-    >
-      Delete RF Unit
-    </button>
-    
-    <button
-      phx-click="cancel_delete"
-      class="bg-medium-light text-slate-700 hover:bg-medium rounded-full px-4 py-2 mx-2 font-semibold"
-    >
-      Cancel
-    </button>
-  </div>
-</.modal>
+<div class="ml-1 mb-6">
+  <button
+    phx-click="create"
+    class="bg-medium-light text-slate-700 hover:bg-light rounded-full px-4 py-2 font-semibold"
+  >
+    Create New RF Unit
+  </button>
+</div>
 
 <div class="relative overflow-x-auto rounded-lg">
   <table id="unit-table" class="w-full text-sm text-left text-slate-700">

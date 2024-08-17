@@ -18,6 +18,7 @@ defmodule RFDataViewerWeb.RFUnitsSerialNumberLive do
      socket
      |> assign(%{sn: sn, test_sets: test_sets})
      |> assign(:check_errors, false)
+     |> assign(:delete_data, [])
      |> assign_modal_id("")
      |> assign_edit_ts(empty_ts)
      |> assign_form(empty_changeset)}
@@ -49,13 +50,23 @@ defmodule RFDataViewerWeb.RFUnitsSerialNumberLive do
   def handle_event("delete", %{"ts_id" => id}, socket) do
     ts = RFData.get_rf_test_set!(id)
 
+    delete_data = [
+      {"Manufacturer", socket.assigns.sn.unit.manufacturer},
+      {"Name", socket.assigns.sn.unit.name},
+      {"Serial Number", socket.assigns.sn.serial_number},
+      {"Test Set Name", ts.name},
+      {"Test Set Location", ts.location},
+      {"Test Set Date", ts.date}
+    ]
+
     {:noreply,
      socket
      |> assign_edit_ts(ts)
+     |> assign(:delete_data, delete_data)
      |> push_open_modal("delete-ts")}
   end
 
-  def handle_event("confirm_delete", %{"ts_id" => id}, socket) do
+  def handle_event("confirm_delete", %{"data" => id}, socket) do
     ts_struct = RFData.get_rf_test_set!(String.to_integer(id))
     case RFData.delete_rf_test_set(ts_struct) do
       {:ok, ts} ->

@@ -25,6 +25,7 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
        data_sets: ds
      })
      |> assign(:check_errors, false)
+     |> assign(:delete_data, [])
      |> assign_modal_id("")
      |> assign_local_datetime(user, Timex.now())
      |> assign_edit_ds(empty_ds)
@@ -59,14 +60,25 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
   def handle_event("delete", %{"ds_id" => id}, %{assigns: %{current_user: user}} = socket) do
     ds = RFData.get_rf_data_set!(id)
 
+    delete_data = [
+      {"Manufacturer", socket.assigns.test_set.serial_number.unit.manufacturer},
+      {"Name", socket.assigns.test_set.serial_number.unit.name},
+      {"Serial Number", socket.assigns.test_set.serial_number.serial_number},
+      {"Test Set Name", socket.assigns.test_set.name},
+      {"Test Set Location", socket.assigns.test_set.location},
+      {"Test Set Date", socket.assigns.test_set.date},
+      {"Data Set Name", ds.name},
+      {"Data Set Date", Users.convert_time_to_user_time(user, ds.date)}
+    ]
+
     {:noreply,
      socket
-     |> assign_local_datetime(user, ds.date)
+     |> assign(:delete_data, delete_data)
      |> assign_edit_ds(ds)
      |> push_open_modal("delete-ds")}
   end
 
-  def handle_event("confirm_delete", %{"ds_id" => id}, %{assigns: %{current_user: user}} = socket) do
+  def handle_event("confirm_delete", %{"data" => id}, %{assigns: %{current_user: user}} = socket) do
     ds_struct = RFData.get_rf_data_set!(String.to_integer(id))
 
     case RFData.delete_rf_data_set(ds_struct) do

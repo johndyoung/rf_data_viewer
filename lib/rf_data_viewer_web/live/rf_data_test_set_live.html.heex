@@ -1,19 +1,16 @@
 <.modal_control modal_id={@modal_id} />
-<div class="ml-1 mb-6">
-  <button
-    phx-click="create"
-    class="bg-medium-light text-slate-700 hover:bg-light rounded-full px-4 py-2 font-semibold"
-  >
-    Create New Data Set
-  </button>
-</div>
-
+<.confirm_delete
+  id="delete-ds"
+  delete_type="Data Set"
+  delete_data={@edit_ds.id}
+  data={@delete_data}
+/>
 <.modal id="ds-form-container">
   <.simple_form for={@form} id="ds-form" phx-submit="save" phx-change="validate">
     <.error :if={@check_errors}>
       Please check the errors below.
     </.error>
-    <.input field={@form[:name]} type="text" label="Name" required autofocus />
+     <.input field={@form[:name]} type="text" label="Name" required autofocus />
     <.input field={@form[:description]} type="text" label="Description" required />
     <.input
       field={@form[:date]}
@@ -30,66 +27,14 @@
   </.simple_form>
 </.modal>
 
-<.modal id="delete-ds">
-  <p class="font-bold text-center pb-3">
-    Are you sure you wish to delete the following Data Set?
-  </p>
-  
-  <dl class="divide-y grid grid-cols-2 justify-center space-x-3">
-    <dt class="font-semibold text-right">Manufacturer:</dt>
-    
-    <dd><%= @test_set.serial_number.unit.manufacturer %></dd>
-    
-    <dt class="font-semibold text-right">Name:</dt>
-    
-    <dd><%= @test_set.serial_number.unit.name %></dd>
-    
-    <dt class="font-semibold text-right">Serial Number:</dt>
-    
-    <dd><%= @test_set.serial_number.serial_number %></dd>
-    
-    <dt class="font-semibold text-right">Test Set Name:</dt>
-    
-    <dd><%= @test_set.name %></dd>
-    
-    <dt class="font-semibold text-right">Test Set Location:</dt>
-    
-    <dd><%= @test_set.location %></dd>
-    
-    <dt class="font-semibold text-right">Test Set Date:</dt>
-    
-    <dd><%= @test_set.date %></dd>
-    
-    <dt class="font-semibold text-right">Data Set Name:</dt>
-    
-    <dd><%= @edit_ds.name %></dd>
-    
-    <dt class="font-semibold text-right">Data Set Date:</dt>
-    
-    <dd><%= @local_datetime %></dd>
-  </dl>
-  
-  <p class="font-extrabold text-center py-3">
-    All subordinate data associated with this data set will be deleted.
-  </p>
-  
-  <div class="grid grid-cols-2">
-    <button
-      phx-click="confirm_delete"
-      phx-value-ds_id={@edit_ds.id}
-      class="bg-medium-light text-slate-700 hover:bg-medium rounded-full px-4 py-2 mx-2 font-semibold"
-    >
-      Delete Serial Number
-    </button>
-    
-    <button
-      phx-click="cancel_delete"
-      class="bg-medium-light text-slate-700 hover:bg-medium rounded-full px-4 py-2 mx-2 font-semibold"
-    >
-      Cancel
-    </button>
-  </div>
-</.modal>
+<div class="ml-1 mb-6">
+  <button
+    phx-click="create"
+    class="bg-medium-light text-slate-700 hover:bg-light rounded-full px-4 py-2 font-semibold"
+  >
+    Create New Data Set
+  </button>
+</div>
 
 <div class="relative overflow-x-auto mb-5 rounded-lg">
   <table class="w-full text-sm text-left text-slate-700">

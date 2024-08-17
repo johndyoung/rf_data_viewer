@@ -1,19 +1,16 @@
 <.modal_control modal_id={@modal_id} />
-<div class="ml-1 mb-6">
-  <button
-    phx-click="create"
-    class="bg-medium-light text-slate-700 hover:bg-light rounded-full px-4 py-2 font-semibold"
-  >
-    Create New Serial Number
-  </button>
-</div>
-
+<.confirm_delete
+  id="delete-sn"
+  delete_type="Serial Number"
+  delete_data={@edit_sn.id}
+  data={@delete_data}
+/>
 <.modal id="sn-form-container">
   <.simple_form for={@form} id="sn-form" phx-submit="save" phx-change="validate">
     <.error :if={@check_errors}>
       Please check the errors below.
     </.error>
-    <.input field={@form[:serial_number]} type="text" label="Serial Number" required autofocus />
+     <.input field={@form[:serial_number]} type="text" label="Serial Number" required autofocus />
     <:actions>
       <.button phx-disable-with="Saving serial number..." class="w-full">
         Save Serial Number
@@ -22,46 +19,14 @@
   </.simple_form>
 </.modal>
 
-<.modal id="delete-sn">
-  <p class="font-bold text-center pb-3">
-    Are you sure you wish to delete the following RF Unit Serial Number?
-  </p>
-  
-  <dl class="divide-y grid grid-cols-2 justify-center space-x-3">
-    <dt class="font-semibold text-right">Manufacturer:</dt>
-    
-    <dd><%= @unit.manufacturer %></dd>
-    
-    <dt class="font-semibold text-right">Name:</dt>
-    
-    <dd><%= @unit.name %></dd>
-    
-    <dt class="font-semibold text-right">Serial Number:</dt>
-    
-    <dd><%= @edit_sn.serial_number %></dd>
-  </dl>
-  
-  <p class="font-extrabold text-center py-3">
-    All subordinate data associated with this serial number will be deleted.
-  </p>
-  
-  <div class="grid grid-cols-2">
-    <button
-      phx-click="confirm_delete"
-      phx-value-sn_id={@edit_sn.id}
-      class="bg-medium-light text-slate-700 hover:bg-medium rounded-full px-4 py-2 mx-2 font-semibold"
-    >
-      Delete Serial Number
-    </button>
-    
-    <button
-      phx-click="cancel_delete"
-      class="bg-medium-light text-slate-700 hover:bg-medium rounded-full px-4 py-2 mx-2 font-semibold"
-    >
-      Cancel
-    </button>
-  </div>
-</.modal>
+<div class="ml-1 mb-6">
+  <button
+    phx-click="create"
+    class="bg-medium-light text-slate-700 hover:bg-light rounded-full px-4 py-2 font-semibold"
+  >
+    Create New Serial Number
+  </button>
+</div>
 
 <div class="relative overflow-x-auto mb-5 rounded-lg">
   <table class="w-full text-sm text-left text-slate-700">

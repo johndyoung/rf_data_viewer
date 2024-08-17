@@ -92,6 +92,7 @@ defmodule RFDataViewerWeb do
 
       # app specific stuff
       import RFDataViewerWeb.ModalControlComponent
+      import RFDataViewerWeb.ConfirmDeleteComponent
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())

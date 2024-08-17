@@ -16,6 +16,7 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
       |> assign_measurements(:gain)
       |> assign_measurements(:vswr)
       |> assign(:delete_type, "")
+      |> assign(:delete_data, [])
       |> assign(:modal_id, "")
       |> assign_local_datetime(user)
 
@@ -29,9 +30,22 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
 
   def handle_event("delete", %{"type" => type}, socket)
       when type == "Gain" or type == "VSWR" do
+
+    delete_data = [
+      {"Manufacturer", socket.assigns.data_set.test_set.serial_number.unit.manufacturer},
+      {"Name", socket.assigns.data_set.test_set.serial_number.unit.name},
+      {"Serial Number", socket.assigns.data_set.test_set.serial_number.serial_number},
+      {"Test Set Name", socket.assigns.data_set.test_set.name},
+      {"Test Set Location", socket.assigns.data_set.test_set.location},
+      {"Test Set Date", socket.assigns.data_set.test_set.date},
+      {"Data Set Name", socket.assigns.data_set.name},
+      {"Data Set Date", socket.assigns.local_datetime}
+    ]
+
     {:noreply,
      socket
      |> assign(:delete_type, type)
+     |> assign(:delete_data, delete_data)
      |> push_open_modal("delete")}
   end
 

@@ -12,6 +12,7 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
      socket
      |> assign(:rf_units, rf_units)
      |> assign(:check_errors, false)
+     |> assign(:delete_data, [])
      |> assign_modal_id("")
      |> assign_edit_unit(empty_unit)
      |> assign_form(empty_changeset)}
@@ -43,13 +44,20 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
   def handle_event("delete", %{"rf_unit_id" => id}, socket) do
     unit = RFUnits.get_rf_unit!(id)
 
+    delete_data = [
+      {"Manufacturer", unit.manufacturer},
+      {"Name", unit.name},
+      {"Description", unit.description}
+    ]
+
     {:noreply,
      socket
      |> assign_edit_unit(unit)
+     |> assign(:delete_data, delete_data)
      |> push_open_modal("delete-rf-unit")}
   end
 
-  def handle_event("confirm_delete", %{"rf_unit_id" => id}, socket) do
+  def handle_event("confirm_delete", %{"data" => id}, socket) do
     case RFUnits.delete_rf_unit_by_id(String.to_integer(id)) do
       {:ok, _} ->
         {:noreply,
