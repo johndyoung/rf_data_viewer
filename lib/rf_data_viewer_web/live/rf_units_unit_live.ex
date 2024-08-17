@@ -11,7 +11,7 @@ defmodule RFDataViewerWeb.RFUnitsUnitLive do
 
     {:ok,
      socket
-     |> assign(%{unit: unit, serial_numbers: data})
+     |> assign(unit: unit, serial_numbers: data)
      |> assign(:check_errors, false)
      |> assign(:delete_data, [])
      |> assign_modal_id("")
@@ -60,6 +60,7 @@ defmodule RFDataViewerWeb.RFUnitsUnitLive do
 
   def handle_event("confirm_delete", %{"data" => id}, socket) do
     sn_struct = RFUnits.get_rf_unit_serial_number!(String.to_integer(id))
+
     case RFUnits.delete_rf_unit_serial_number(sn_struct) do
       {:ok, sn} ->
         {:noreply,
@@ -70,6 +71,7 @@ defmodule RFDataViewerWeb.RFUnitsUnitLive do
 
       {:error, %Ecto.Changeset{} = changeset} ->
         changeset.errors
+
         {:noreply,
          socket
          |> put_flash(:error, "Failed to delete Serial Number.")}
@@ -106,7 +108,12 @@ defmodule RFDataViewerWeb.RFUnitsUnitLive do
         socket =
           if is_nil(edit_sn.id),
             do: update(socket, :serial_numbers, fn sns -> [sn_tuple | sns] end),
-            else: assign(socket, :serial_numbers, RFUnits.get_rf_unit_serial_numbers_with_counts(edit_sn.rf_unit_id))
+            else:
+              assign(
+                socket,
+                :serial_numbers,
+                RFUnits.get_rf_unit_serial_numbers_with_counts(edit_sn.rf_unit_id)
+              )
 
         {:noreply,
          socket
@@ -126,13 +133,6 @@ defmodule RFDataViewerWeb.RFUnitsUnitLive do
 
   defp assign_edit_sn(socket, %RFUnitSerialNumber{} = sn), do: assign(socket, :edit_sn, sn)
 
-  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
-    form = to_form(changeset, as: "sn")
-
-    if changeset.valid? do
-      assign(socket, form: form, check_errors: false)
-    else
-      assign(socket, form: form)
-    end
-  end
+  defp assign_form(socket, %Ecto.Changeset{} = changeset),
+    do: RFDataViewerWeb.FormHelper.assign_form(socket, "sn", changeset)
 end

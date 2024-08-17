@@ -18,12 +18,12 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
 
     {:ok,
      socket
-     |> assign(%{
+     |> assign(
        test_set: ts,
        data_set_count: ds_count,
        data_count: data_count,
        data_sets: ds
-     })
+     )
      |> assign(:check_errors, false)
      |> assign(:delete_data, [])
      |> assign_modal_id("")
@@ -166,15 +166,8 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
 
   defp assign_edit_ds(socket, %RFDataSet{} = ds), do: assign(socket, :edit_ds, ds)
 
-  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
-    form = to_form(changeset, as: "ds")
-
-    if changeset.valid? do
-      assign(socket, form: form, check_errors: false)
-    else
-      assign(socket, form: form)
-    end
-  end
+  defp assign_form(socket, %Ecto.Changeset{} = changeset),
+    do: RFDataViewerWeb.FormHelper.assign_form(socket, "ds", changeset)
 
   defp add_timezone(datetime, timezone) do
     with {:ok, time} <- datetime do

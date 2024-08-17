@@ -16,7 +16,7 @@ defmodule RFDataViewerWeb.RFUnitsSerialNumberLive do
 
     {:ok,
      socket
-     |> assign(%{sn: sn, test_sets: test_sets})
+     |> assign(sn: sn, test_sets: test_sets)
      |> assign(:check_errors, false)
      |> assign(:delete_data, [])
      |> assign_modal_id("")
@@ -68,6 +68,7 @@ defmodule RFDataViewerWeb.RFUnitsSerialNumberLive do
 
   def handle_event("confirm_delete", %{"data" => id}, socket) do
     ts_struct = RFData.get_rf_test_set!(String.to_integer(id))
+
     case RFData.delete_rf_test_set(ts_struct) do
       {:ok, ts} ->
         {:noreply,
@@ -78,6 +79,7 @@ defmodule RFDataViewerWeb.RFUnitsSerialNumberLive do
 
       {:error, %Ecto.Changeset{} = changeset} ->
         changeset.errors
+
         {:noreply,
          socket
          |> put_flash(:error, "Failed to delete Test Set.")}
@@ -134,13 +136,6 @@ defmodule RFDataViewerWeb.RFUnitsSerialNumberLive do
 
   defp assign_edit_ts(socket, %RFTestSet{} = ts), do: assign(socket, :edit_ts, ts)
 
-  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
-    form = to_form(changeset, as: "ts")
-
-    if changeset.valid? do
-      assign(socket, form: form, check_errors: false)
-    else
-      assign(socket, form: form)
-    end
-  end
+  defp assign_form(socket, %Ecto.Changeset{} = changeset),
+    do: RFDataViewerWeb.FormHelper.assign_form(socket, "ts", changeset)
 end

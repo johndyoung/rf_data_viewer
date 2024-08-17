@@ -68,6 +68,7 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
 
       {:error, %Ecto.Changeset{} = changeset} ->
         changeset.errors
+
         {:noreply,
          socket
          |> put_flash(:error, "Failed to delete RF unit.")}
@@ -124,13 +125,6 @@ defmodule RFDataViewerWeb.RFUnitsManageLive do
 
   defp assign_edit_unit(socket, %RFUnit{} = unit), do: assign(socket, :edit_rf_unit, unit)
 
-  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
-    form = to_form(changeset, as: "unit")
-
-    if changeset.valid? do
-      assign(socket, form: form, check_errors: false)
-    else
-      assign(socket, form: form)
-    end
-  end
+  defp assign_form(socket, %Ecto.Changeset{} = changeset),
+    do: RFDataViewerWeb.FormHelper.assign_form(socket, "unit", changeset)
 end
