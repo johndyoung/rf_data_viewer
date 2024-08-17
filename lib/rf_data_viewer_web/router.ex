@@ -72,6 +72,7 @@ defmodule RFDataViewerWeb.Router do
       live "/rf/units/unit/:rf_unit_id", RFUnitsUnitLive
       live "/rf/units/sn/:sn_id", RFUnitsSerialNumberLive
       live "/rf/data/test_set/:test_set_id", RFDataTestSetLive
+      live "/rf/data/data_set/:data_set_id", RFDataDataSetLive
       live "/rf/data/upload", RFDataUploadLive
     end
   end

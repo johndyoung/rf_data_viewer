@@ -16,43 +16,96 @@
 //
 
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
-import "phoenix_html"
+import "phoenix_html";
 // Establish Phoenix Socket and LiveView configuration.
-import {Socket} from "phoenix"
-import {LiveSocket} from "phoenix_live_view"
-import topbar from "../vendor/topbar"
+import { Socket } from "phoenix";
+import { LiveSocket } from "phoenix_live_view";
+import topbar from "../vendor/topbar";
+import CanvasJS from "@canvasjs/charts";
 
-let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+let hooks = {};
+hooks.InfiniteScroll = {
+  loadMore(entries) {
+    const target = entries[0];
+    if (target.isIntersecting && !this.el.disabled) {
+      console.log(this.el.id)
+      this.el.click();
+    }
+  },
+  mounted() {
+    this.observer = new IntersectionObserver((entries) =>
+      this.loadMore(entries)
+    );
+    console.log(this.el.id)
+    this.observer.observe(this.el);
+  },
+  beforeDestroy() {
+    this.observer.unobserve(this.el);
+  },
+};
+
+let csrfToken = document
+  .querySelector("meta[name='csrf-token']")
+  .getAttribute("content");
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: {_csrf_token: csrfToken}
-})
+  params: { _csrf_token: csrfToken },
+  hooks: hooks,
+});
 
 // Show progress bar on live navigation and form submits
-topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
-window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
-window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
+topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
+window.addEventListener("phx:page-loading-start", (_info) => topbar.show(300));
+window.addEventListener("phx:page-loading-stop", (_info) => topbar.hide());
 
 // connect if there are any LiveViews on the page
-liveSocket.connect()
+liveSocket.connect();
 
 // expose liveSocket on window for web console debug logs and latency simulation:
 // >> liveSocket.enableDebug()
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
 // >> liveSocket.disableLatencySim()
-window.liveSocket = liveSocket
+window.liveSocket = liveSocket;
 
 // TODO: organize resource specific functionality better
 // RESOURCE: /rf/units/manage
 
 // ensure RF unit form is opened on detected server event
 window.addEventListener("phx:rf-unit-open-modal", (e) => {
-  let el = document.getElementById("modal-control")
-  liveSocket.execJS(el, el.getAttribute("data-open-modal"))
-})
+  let el = document.getElementById("modal-control");
+  liveSocket.execJS(el, el.getAttribute("data-open-modal"));
+});
 
 // ensure RF unit form is closed on detected server event
 window.addEventListener("phx:rf-unit-close-modal", (e) => {
-  let el = document.getElementById("modal-control")
-  liveSocket.execJS(el, el.getAttribute("data-close-modal"))
-})
+  let el = document.getElementById("modal-control");
+  liveSocket.execJS(el, el.getAttribute("data-close-modal"));
+});
+
+// RESOURCE: /rf/data/data_set
+
+window.addEventListener("phx:rf-data-generate-chart", (e) => {
+  var chart = new CanvasJS.Chart(e.detail.graph_container_id, {
+    animationEnabled: true,
+    title: {
+      text: e.detail.title,
+    },
+    axisX: {
+      title: "Frequency (MHz)",
+      includeZero: true,
+    },
+    axisY: {
+      title: e.detail.y_axis,
+      includeZero: true,
+    },
+    data: [
+      {
+        type: "line",
+        name: "Path RF Characterization",
+        connectNullData: true,
+        dataPoints: e.detail.data,
+      },
+    ],
+  });
+  chart.render();
+});

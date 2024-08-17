@@ -60,7 +60,8 @@ defmodule RFDataViewer.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:pbkdf2_elixir, "~> 2.0"},
-      {:timex, "~> 3.0"}
+      {:timex, "~> 3.0"},
+      {:csv, "~> 3.2"}
     ]
   end
 

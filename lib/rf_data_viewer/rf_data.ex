@@ -257,6 +257,49 @@ defmodule RFDataViewer.RFData do
   def get_rf_data_set!(id), do: Repo.get!(RFDataSet, id)
 
   @doc """
+  Gets a single rf_data_set along with gain and VSWR data counts.
+
+  Raises `Ecto.NoResultsError` if the Rf data set does not exist.
+
+  ## Examples
+
+      iex> get_rf_data_set_with_counts!(123)
+      {%RFDataSet{}, 0, 0}
+
+      iex> get_rf_data_set_with_counts!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_rf_data_set_with_counts!(id) do
+    gain_subquery =
+      from g in RFGain,
+        join: d in assoc(g, :data_set),
+        group_by: d.id,
+        select: %{id: d.id, count: count()}
+
+    vswr_subquery =
+      from v in RFVswr,
+        join: d in assoc(v, :data_set),
+        group_by: d.id,
+        select: %{id: d.id, count: count()}
+
+    gain_order = from g in RFGain, order_by: g.frequency
+    vswr_order = from v in RFVswr, order_by: v.frequency
+
+    query =
+      from d in RFDataSet,
+        left_join: g in subquery(gain_subquery),
+        on: g.id == d.id,
+        left_join: v in subquery(vswr_subquery),
+        on: v.id == d.id,
+        preload: [gain: ^gain_order, vswr: ^vswr_order, test_set: [serial_number: :unit]],
+        where: d.id == ^id,
+        select: {d, coalesce(g.count, 0), coalesce(v.count, 0)}
+
+    Repo.one(query)
+  end
+
+  @doc """
   Creates a rf_data_set.
 
   ## Examples
@@ -324,6 +367,22 @@ defmodule RFDataViewer.RFData do
 
   alias RFDataViewer.RFData.RFGain
 
+  defp compose_list_measurements(query, criteria) do
+    Enum.reduce(criteria, query, fn
+      {:end, end_freq}, query when not is_nil(end_freq) and is_integer(end_freq) ->
+        from q in query, where: q.frequency <= ^end_freq
+
+      {:start, start_freq}, query when not is_nil(start_freq) and is_integer(start_freq) ->
+        from q in query, where: q.frequency >= ^start_freq
+
+      {:limit, limit}, query when not is_nil(limit) and is_integer(limit) ->
+        from q in query, limit: ^limit
+
+      _, query ->
+        query
+    end)
+  end
+
   @doc """
   Returns the list of rf_gain.
 
@@ -335,6 +394,17 @@ defmodule RFDataViewer.RFData do
   """
   def list_rf_gain do
     Repo.all(RFGain)
+  end
+
+  def list_rf_gain(data_set_id) when is_integer(data_set_id) do
+    from(g in RFGain, where: g.rf_data_set_id == ^data_set_id, order_by: g.frequency)
+    |> Repo.all()
+  end
+
+  def list_rf_gain(data_set_id, criteria) when is_integer(data_set_id) and is_list(criteria) do
+    from(g in RFGain, where: g.rf_data_set_id == ^data_set_id, order_by: g.frequency)
+    |> compose_list_measurements(criteria)
+    |> Repo.all()
   end
 
   @doc """
@@ -365,11 +435,43 @@ defmodule RFDataViewer.RFData do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_rf_gain(%RFDataSet{} = rf_data_set, attrs \\ %{}) do
+  def create_rf_gain(%RFDataSet{} = rf_data_set, %{} = attrs \\ %{}) do
     rf_data_set
     |> Ecto.build_assoc(:gain, attrs)
     |> RFGain.changeset(attrs)
     |> Repo.insert()
+  end
+
+  def batch_create_rf_gain(%RFDataSet{} = rf_data_set, entries \\ []) do
+    changesets =
+      entries
+      |> Enum.map(fn attrs ->
+        rf_data_set
+        |> Ecto.build_assoc(:gain, attrs)
+        |> RFGain.changeset(attrs)
+      end)
+
+    valid? = not Enum.any?(changesets, &(not &1.valid?))
+
+    if valid? do
+      date = DateTime.truncate(DateTime.utc_now(), :second)
+
+      Repo.insert_all(
+        RFGain,
+        changesets
+        |> Enum.map(
+          &%{
+            frequency: &1.data.frequency,
+            gain: &1.data.gain,
+            rf_data_set_id: &1.data.rf_data_set_id,
+            inserted_at: date,
+            updated_at: date
+          }
+        )
+      )
+    else
+      {0, Enum.filter(changesets, &(not &1.valid?))}
+    end
   end
 
   @doc """
@@ -388,6 +490,11 @@ defmodule RFDataViewer.RFData do
     rf_gain
     |> RFGain.changeset(attrs)
     |> Repo.update()
+  end
+
+  def delete_rf_gain(data_set_id) when is_integer(data_set_id) do
+    from(g in RFGain, where: g.rf_data_set_id == ^data_set_id)
+    |> Repo.delete_all()
   end
 
   @doc """
@@ -434,6 +541,17 @@ defmodule RFDataViewer.RFData do
     Repo.all(RFVswr)
   end
 
+  def list_rf_vswr(data_set_id) when is_integer(data_set_id) do
+    from(v in RFVswr, where: v.rf_data_set_id == ^data_set_id, order_by: v.frequency)
+    |> Repo.all()
+  end
+
+  def list_rf_vswr(data_set_id, criteria) when is_integer(data_set_id) and is_list(criteria) do
+    from(v in RFVswr, where: v.rf_data_set_id == ^data_set_id, order_by: v.frequency)
+    |> compose_list_measurements(criteria)
+    |> Repo.all()
+  end
+
   @doc """
   Gets a single rf_vswr.
 
@@ -469,6 +587,38 @@ defmodule RFDataViewer.RFData do
     |> Repo.insert()
   end
 
+  def batch_create_rf_vswr(%RFDataSet{} = rf_data_set, entries \\ []) do
+    changesets =
+      entries
+      |> Enum.map(fn attrs ->
+        rf_data_set
+        |> Ecto.build_assoc(:vswr, attrs)
+        |> RFVswr.changeset(attrs)
+      end)
+
+    valid? = not Enum.any?(changesets, &(not &1.valid?))
+
+    if valid? do
+      date = DateTime.truncate(DateTime.utc_now(), :second)
+
+      Repo.insert_all(
+        RFVswr,
+        changesets
+        |> Enum.map(
+          &%{
+            frequency: &1.data.frequency,
+            vswr: &1.data.vswr,
+            rf_data_set_id: &1.data.rf_data_set_id,
+            inserted_at: date,
+            updated_at: date
+          }
+        )
+      )
+    else
+      {0, Enum.filter(changesets, &(not &1.valid?))}
+    end
+  end
+
   @doc """
   Updates a rf_vswr.
 
@@ -485,6 +635,11 @@ defmodule RFDataViewer.RFData do
     rf_vswr
     |> RFVswr.changeset(attrs)
     |> Repo.update()
+  end
+
+  def delete_rf_vswr(data_set_id) when is_integer(data_set_id) do
+    from(v in RFVswr, where: v.rf_data_set_id == ^data_set_id)
+    |> Repo.delete_all()
   end
 
   @doc """
