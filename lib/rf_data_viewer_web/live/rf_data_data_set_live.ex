@@ -55,7 +55,7 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
 
     {count, _} =
       case type do
-        :gain -> RFData.delete_rf_gain(socket.assigns.data_set.id)
+        :gain -> RFData.delete_rf_measurements(socket.assigns.data_set.id, "gain")
         :vswr -> RFData.delete_rf_vswr(socket.assigns.data_set.id)
       end
 
@@ -98,10 +98,10 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
         entities =
           transform_data.(path)
           |> Enum.map(fn {freq, measurement} ->
-            %{frequency: freq, gain: measurement}
+            %{type: "gain", frequency: freq, value: measurement}
           end)
 
-        {count, _} = RFData.batch_create_rf_gain(data_set, entities)
+        {count, _} = RFData.batch_create_rf_measurement(data_set, entities)
         {:ok, count}
       end) != []
 
@@ -143,8 +143,8 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
 
   defp assign_update_charts(socket) do
     gain =
-      socket.assigns.data_set.gain
-      |> Enum.map(&%{x: &1.frequency, y: &1.gain})
+      socket.assigns.data_set.measurements
+      |> Enum.map(&%{x: &1.frequency, y: &1.value})
 
     vswr =
       socket.assigns.data_set.vswr
@@ -204,7 +204,7 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
   end
 
   defp get_measurements(:gain, data_set_id, criteria),
-    do: get_measurement_data(&RFData.list_rf_gain/2, data_set_id, criteria)
+    do: get_measurement_data(&RFData.list_rf_measurements/2, data_set_id, criteria ++ [type: "gain"])
 
   defp get_measurements(:vswr, data_set_id, criteria),
     do: get_measurement_data(&RFData.list_rf_vswr/2, data_set_id, criteria)

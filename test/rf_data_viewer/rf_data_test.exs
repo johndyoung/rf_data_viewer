@@ -73,8 +73,17 @@ defmodule RFDataViewer.RFDataTest do
       assert {:error, %Ecto.Changeset{}} =
                RFData.create_rf_test_set(sn, valid)
 
-      {:ok, unit} = RFDataViewer.RFUnits.create_rf_unit(%{name: "random", description: "random", manufacturer: "random"})
-      {:ok, diff_sn} = RFDataViewer.RFUnits.create_rf_unit_serial_number(unit, %{serial_number: "#{sn.serial_number} diff"})
+      {:ok, unit} =
+        RFDataViewer.RFUnits.create_rf_unit(%{
+          name: "random",
+          description: "random",
+          manufacturer: "random"
+        })
+
+      {:ok, diff_sn} =
+        RFDataViewer.RFUnits.create_rf_unit_serial_number(unit, %{
+          serial_number: "#{sn.serial_number} diff"
+        })
 
       assert {:ok, %RFTestSet{}} =
                RFData.create_rf_test_set(diff_sn, valid)
@@ -191,61 +200,72 @@ defmodule RFDataViewer.RFDataTest do
     end
   end
 
-  describe "rf_gain" do
-    alias RFDataViewer.RFData.RFGain
+  describe "rf_measurements" do
+    alias RFDataViewer.RFData.RFMeasurement
 
     import RFDataViewer.RFDataFixtures
 
     @invalid_attrs %{frequency: nil, gain: nil}
 
-    test "list_rf_gain/0 returns all rf_gain" do
-      rf_gain = rf_gain_fixture()
-      assert RFData.list_rf_gain() == [rf_gain]
+    test "list_rf_measurements/0 returns all rf_measurements" do
+      rf_measurement = rf_measurement_fixture()
+      assert RFData.list_rf_measurements() == [rf_measurement]
     end
 
-    test "get_rf_gain!/1 returns the rf_gain with given id" do
-      rf_gain = rf_gain_fixture()
-      assert RFData.get_rf_gain!(rf_gain.id) == rf_gain
+    test "get_rf_measurement!/1 returns the rf_measurement with given id" do
+      rf_measurement = rf_measurement_fixture()
+      assert RFData.get_rf_measurement!(rf_measurement.id) == rf_measurement
     end
 
-    test "create_rf_gain/1 with valid data creates a rf_gain" do
+    test "create_rf_measurement/1 with valid data creates a rf_measurements" do
       rf_data_set = RFDataViewer.RFDataFixtures.rf_data_set_fixture()
-      valid_attrs = %{frequency: 42, gain: 120.5}
+      valid_attrs = %{type: "lol", frequency: 42, value: 120.5}
 
-      assert {:ok, %RFGain{} = rf_gain} = RFData.create_rf_gain(rf_data_set, valid_attrs)
-      assert rf_gain.frequency == 42
-      assert rf_gain.gain == 120.5
+      assert {:ok, %RFMeasurement{} = rf_measurement} =
+               RFData.create_rf_measurement(rf_data_set, valid_attrs)
+
+      assert rf_measurement.type == "lol"
+      assert rf_measurement.frequency == 42
+      assert rf_measurement.value == 120.5
     end
 
-    test "create_rf_gain/1 with invalid data returns error changeset" do
+    test "create_rf_measurement/1 with invalid data returns error changeset" do
       rf_data_set = RFDataViewer.RFDataFixtures.rf_data_set_fixture()
-      assert {:error, %Ecto.Changeset{}} = RFData.create_rf_gain(rf_data_set, @invalid_attrs)
+
+      assert {:error, %Ecto.Changeset{}} =
+               RFData.create_rf_measurement(rf_data_set, @invalid_attrs)
     end
 
-    test "update_rf_gain/2 with valid data updates the rf_gain" do
-      rf_gain = rf_gain_fixture()
-      update_attrs = %{frequency: 43, gain: 456.7}
+    test "update_rf_measurement/2 with valid data updates the rf_measurement" do
+      rf_measurement = rf_measurement_fixture()
+      update_attrs = %{type: "lol", frequency: 43, value: 456.7}
 
-      assert {:ok, %RFGain{} = rf_gain} = RFData.update_rf_gain(rf_gain, update_attrs)
-      assert rf_gain.frequency == 43
-      assert rf_gain.gain == 456.7
+      assert {:ok, %RFMeasurement{} = rf_measurement} =
+               RFData.update_rf_measurement(rf_measurement, update_attrs)
+
+      assert rf_measurement.type == "lol"
+      assert rf_measurement.frequency == 43
+      assert rf_measurement.value == 456.7
     end
 
-    test "update_rf_gain/2 with invalid data returns error changeset" do
-      rf_gain = rf_gain_fixture()
-      assert {:error, %Ecto.Changeset{}} = RFData.update_rf_gain(rf_gain, @invalid_attrs)
-      assert rf_gain == RFData.get_rf_gain!(rf_gain.id)
+    test "update_rf_measurement/2 with invalid data returns error changeset" do
+      rf_measurement = rf_measurement_fixture()
+
+      assert {:error, %Ecto.Changeset{}} =
+               RFData.update_rf_measurement(rf_measurement, @invalid_attrs)
+
+      assert rf_measurement == RFData.get_rf_measurement!(rf_measurement.id)
     end
 
-    test "delete_rf_gain/1 deletes the rf_gain" do
-      rf_gain = rf_gain_fixture()
-      assert {:ok, %RFGain{}} = RFData.delete_rf_gain(rf_gain)
-      assert_raise Ecto.NoResultsError, fn -> RFData.get_rf_gain!(rf_gain.id) end
+    test "delete_rf_measurement/1 deletes the rf_measurement" do
+      rf_measurement = rf_measurement_fixture()
+      assert {:ok, %RFMeasurement{}} = RFData.delete_rf_measurement(rf_measurement)
+      assert_raise Ecto.NoResultsError, fn -> RFData.get_rf_measurement!(rf_measurement.id) end
     end
 
-    test "change_rf_gain/1 returns a rf_gain changeset" do
-      rf_gain = rf_gain_fixture()
-      assert %Ecto.Changeset{} = RFData.change_rf_gain(rf_gain)
+    test "change_rf_measurement/1 returns a rf_measurement changeset" do
+      rf_measurement = rf_measurement_fixture()
+      assert %Ecto.Changeset{} = RFData.change_rf_measurement(rf_measurement)
     end
   end
 

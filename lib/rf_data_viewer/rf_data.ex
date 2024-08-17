@@ -8,7 +8,7 @@ defmodule RFDataViewer.RFData do
   alias RFDataViewer.RFUnits.RFUnitSerialNumber
   alias RFDataViewer.RFData.RFTestSet
   alias RFDataViewer.RFData.RFDataSet
-  alias RFDataViewer.RFData.RFGain
+  alias RFDataViewer.RFData.RFMeasurement
   alias RFDataViewer.RFData.RFVswr
 
   @doc """
@@ -39,8 +39,8 @@ defmodule RFDataViewer.RFData do
         select: %{id: d.rf_test_set_id, count: count()}
 
     gain_subquery =
-      from g in RFGain,
-        join: d in assoc(g, :data_set),
+      from m in RFMeasurement,
+        join: d in assoc(m, :data_set),
         group_by: d.rf_test_set_id,
         select: %{id: d.rf_test_set_id, count: count()}
 
@@ -98,8 +98,8 @@ defmodule RFDataViewer.RFData do
         select: %{id: t.id, count: count()}
 
     gain_subquery =
-      from g in RFGain,
-        join: d in assoc(g, :data_set),
+      from m in RFMeasurement,
+        join: d in assoc(m, :data_set),
         group_by: d.rf_test_set_id,
         select: %{id: d.rf_test_set_id, count: count()}
 
@@ -217,8 +217,8 @@ defmodule RFDataViewer.RFData do
   """
   def get_rf_data_sets_with_counts(test_set_id) do
     gain_subquery =
-      from g in RFGain,
-        join: d in assoc(g, :data_set),
+      from m in RFMeasurement,
+        join: d in assoc(m, :data_set),
         group_by: d.id,
         select: %{id: d.id, count: count()}
 
@@ -272,8 +272,8 @@ defmodule RFDataViewer.RFData do
   """
   def get_rf_data_set_with_counts!(id) do
     gain_subquery =
-      from g in RFGain,
-        join: d in assoc(g, :data_set),
+      from m in RFMeasurement,
+        join: d in assoc(m, :data_set),
         group_by: d.id,
         select: %{id: d.id, count: count()}
 
@@ -283,7 +283,7 @@ defmodule RFDataViewer.RFData do
         group_by: d.id,
         select: %{id: d.id, count: count()}
 
-    gain_order = from g in RFGain, order_by: g.frequency
+    measurement_order = from m in RFMeasurement, where: m.type == "gain", order_by: m.frequency
     vswr_order = from v in RFVswr, order_by: v.frequency
 
     query =
@@ -292,7 +292,11 @@ defmodule RFDataViewer.RFData do
         on: g.id == d.id,
         left_join: v in subquery(vswr_subquery),
         on: v.id == d.id,
-        preload: [gain: ^gain_order, vswr: ^vswr_order, test_set: [serial_number: :unit]],
+        preload: [
+          measurements: ^measurement_order,
+          vswr: ^vswr_order,
+          test_set: [serial_number: :unit]
+        ],
         where: d.id == ^id,
         select: {d, coalesce(g.count, 0), coalesce(v.count, 0)}
 
@@ -365,10 +369,16 @@ defmodule RFDataViewer.RFData do
     RFDataSet.changeset(rf_data_set, attrs)
   end
 
-  alias RFDataViewer.RFData.RFGain
+  alias RFDataViewer.RFData.RFMeasurement
 
   defp compose_list_measurements(query, criteria) do
     Enum.reduce(criteria, query, fn
+      {:type, type}, query when is_list(type) ->
+        from q in query, where: q.type in ^type
+
+      {:type, type}, query when not is_nil(type) ->
+        from q in query, where: q.type == ^type
+
       {:end, end_freq}, query when not is_nil(end_freq) and is_integer(end_freq) ->
         from q in query, where: q.frequency <= ^end_freq
 
@@ -384,71 +394,72 @@ defmodule RFDataViewer.RFData do
   end
 
   @doc """
-  Returns the list of rf_gain.
+  Returns the list of rf_measurements.
 
   ## Examples
 
-      iex> list_rf_gain()
-      [%RFGain{}, ...]
+      iex> list_rf_measurements()
+      [%RFMeasurement{}, ...]
 
   """
-  def list_rf_gain do
-    Repo.all(RFGain)
+  def list_rf_measurements do
+    Repo.all(RFMeasurement)
   end
 
-  def list_rf_gain(data_set_id) when is_integer(data_set_id) do
-    from(g in RFGain, where: g.rf_data_set_id == ^data_set_id, order_by: g.frequency)
+  def list_rf_measurements(data_set_id) when is_integer(data_set_id) do
+    from(m in RFMeasurement, where: m.rf_data_set_id == ^data_set_id, order_by: m.frequency)
     |> Repo.all()
   end
 
-  def list_rf_gain(data_set_id, criteria) when is_integer(data_set_id) and is_list(criteria) do
-    from(g in RFGain, where: g.rf_data_set_id == ^data_set_id, order_by: g.frequency)
+  def list_rf_measurements(data_set_id, criteria)
+      when is_integer(data_set_id) and is_list(criteria) do
+    from(m in RFMeasurement, where: m.rf_data_set_id == ^data_set_id, order_by: m.frequency)
     |> compose_list_measurements(criteria)
     |> Repo.all()
   end
 
   @doc """
-  Gets a single rf_gain.
+  Gets a single rf_measurements.
 
-  Raises `Ecto.NoResultsError` if the Rf gain does not exist.
+  Raises `Ecto.NoResultsError` if the RF measurement does not exist.
 
   ## Examples
 
-      iex> get_rf_gain!(123)
-      %RFGain{}
+      iex> get_rf_measurement!(123)
+      %RFMeasurement{}
 
-      iex> get_rf_gain!(456)
+      iex> get_rf_measurement!(456)
       ** (Ecto.NoResultsError)
 
   """
-  def get_rf_gain!(id), do: Repo.get!(RFGain, id)
+  def get_rf_measurement!(id), do: Repo.get!(RFMeasurement, id)
 
   @doc """
-  Creates a rf_gain.
+  Creates a rf_measurements.
 
   ## Examples
 
-      iex> create_rf_gain(%{field: value})
-      {:ok, %RFGain{}}
+      iex> create_rf_measurement(%{field: value})
+      {:ok, %RFMeasurement{}}
 
-      iex> create_rf_gain(%{field: bad_value})
+      iex> create_rf_measurement(%{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_rf_gain(%RFDataSet{} = rf_data_set, %{} = attrs \\ %{}) do
+  def create_rf_measurement(%RFDataSet{} = rf_data_set, %{} = attrs \\ %{}) do
     rf_data_set
-    |> Ecto.build_assoc(:gain, attrs)
-    |> RFGain.changeset(attrs)
+    |> Ecto.build_assoc(:measurements, attrs)
+    |> RFMeasurement.changeset(attrs)
     |> Repo.insert()
   end
 
-  def batch_create_rf_gain(%RFDataSet{} = rf_data_set, entries \\ []) do
+  def batch_create_rf_measurement(%RFDataSet{} = rf_data_set, entries \\ []) do
     changesets =
       entries
       |> Enum.map(fn attrs ->
         rf_data_set
-        |> Ecto.build_assoc(:gain, attrs)
-        |> RFGain.changeset(attrs)
+        |> Ecto.build_assoc(:measurements, attrs)
+        |> RFMeasurement.changeset(attrs)
       end)
 
     valid? = not Enum.any?(changesets, &(not &1.valid?))
@@ -457,12 +468,13 @@ defmodule RFDataViewer.RFData do
       date = DateTime.truncate(DateTime.utc_now(), :second)
 
       Repo.insert_all(
-        RFGain,
+        RFMeasurement,
         changesets
         |> Enum.map(
           &%{
+            type: &1.data.type,
             frequency: &1.data.frequency,
-            gain: &1.data.gain,
+            value: &1.data.value,
             rf_data_set_id: &1.data.rf_data_set_id,
             inserted_at: date,
             updated_at: date
@@ -475,55 +487,59 @@ defmodule RFDataViewer.RFData do
   end
 
   @doc """
-  Updates a rf_gain.
+  Updates a rf_measurement.
 
   ## Examples
 
-      iex> update_rf_gain(rf_gain, %{field: new_value})
-      {:ok, %RFGain{}}
+      iex> update_rf_measurement(rf_measurement, %{field: new_value})
+      {:ok, %RFMeasurement{}}
 
-      iex> update_rf_gain(rf_gain, %{field: bad_value})
+      iex> update_rf_measurement(rf_measurement, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def update_rf_gain(%RFGain{} = rf_gain, attrs) do
-    rf_gain
-    |> RFGain.changeset(attrs)
+  def update_rf_measurement(%RFMeasurement{} = rf_measurement, attrs) do
+    rf_measurement
+    |> RFMeasurement.changeset(attrs)
     |> Repo.update()
   end
 
-  def delete_rf_gain(data_set_id) when is_integer(data_set_id) do
-    from(g in RFGain, where: g.rf_data_set_id == ^data_set_id)
+  def delete_rf_measurements(data_set_id, type \\ nil) when is_integer(data_set_id) do
+    from(m in RFMeasurement, where: m.rf_data_set_id == ^data_set_id)
+    |> case do
+      query when not is_nil(type) -> from q in query, where: q.type == ^type
+      query -> query
+    end
     |> Repo.delete_all()
   end
 
   @doc """
-  Deletes a rf_gain.
+  Deletes a rf_measurement.
 
   ## Examples
 
-      iex> delete_rf_gain(rf_gain)
-      {:ok, %RFGain{}}
+      iex> delete_rf_measurement(rf_measurement)
+      {:ok, %RFMeasurement{}}
 
-      iex> delete_rf_gain(rf_gain)
+      iex> delete_rf_measurement(rf_measurement)
       {:error, %Ecto.Changeset{}}
 
   """
-  def delete_rf_gain(%RFGain{} = rf_gain) do
-    Repo.delete(rf_gain)
+  def delete_rf_measurement(%RFMeasurement{} = rf_measurement) do
+    Repo.delete(rf_measurement)
   end
 
   @doc """
-  Returns an `%Ecto.Changeset{}` for tracking rf_gain changes.
+  Returns an `%Ecto.Changeset{}` for tracking rf_measurement changes.
 
   ## Examples
 
-      iex> change_rf_gain(rf_gain)
-      %Ecto.Changeset{data: %RFGain{}}
+      iex> change_rf_measurement(rf_measurement)
+      %Ecto.Changeset{data: %RFMeasurement{}}
 
   """
-  def change_rf_gain(%RFGain{} = rf_gain, attrs \\ %{}) do
-    RFGain.changeset(rf_gain, attrs)
+  def change_rf_measurement(%RFMeasurement{} = rf_measurement, attrs \\ %{}) do
+    RFMeasurement.changeset(rf_measurement, attrs)
   end
 
   alias RFDataViewer.RFData.RFVswr

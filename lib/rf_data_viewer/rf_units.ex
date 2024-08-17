@@ -7,7 +7,7 @@ defmodule RFDataViewer.RFUnits do
   alias RFDataViewer.RFUnits.RFUnitSerialNumber
   alias RFDataViewer.RFData.RFTestSet
   alias RFDataViewer.RFData.RFDataSet
-  alias RFDataViewer.RFData.RFGain
+  alias RFDataViewer.RFData.RFMeasurement
   alias RFDataViewer.RFData.RFVswr
   alias RFDataViewer.Repo
 
@@ -54,8 +54,8 @@ defmodule RFDataViewer.RFUnits do
         select: %{id: s.rf_unit_id, count: count()}
 
     gain_subquery =
-      from g in RFGain,
-        join: d in assoc(g, :data_set),
+      from m in RFMeasurement,
+        join: d in assoc(m, :data_set),
         join: t in assoc(d, :test_set),
         join: s in assoc(t, :serial_number),
         group_by: s.rf_unit_id,
@@ -226,8 +226,8 @@ defmodule RFDataViewer.RFUnits do
         select: %{id: t.rf_unit_serial_number_id, count: count()}
 
     gain_subquery =
-      from g in RFGain,
-        join: d in assoc(g, :data_set),
+      from m in RFMeasurement,
+        join: d in assoc(m, :data_set),
         join: t in assoc(d, :test_set),
         group_by: t.rf_unit_serial_number_id,
         select: %{id: t.rf_unit_serial_number_id, count: count()}

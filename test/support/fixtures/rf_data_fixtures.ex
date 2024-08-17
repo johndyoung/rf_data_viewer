@@ -42,20 +42,21 @@ defmodule RFDataViewer.RFDataFixtures do
   end
 
   @doc """
-  Generate a rf_gain.
+  Generate a rf_measurements entry.
   """
-  def rf_gain_fixture(attrs \\ %{}) do
+  def rf_measurement_fixture(attrs \\ %{}) do
     data_set = rf_data_set_fixture()
 
-    {:ok, rf_gain} =
+    {:ok, rf_measurement} =
       attrs
       |> Enum.into(%{
+        type: "gain",
         frequency: 42,
-        gain: 120.5
+        value: 120.5
       })
-      |> then(fn gain -> RFDataViewer.RFData.create_rf_gain(data_set, gain) end)
+      |> then(fn meas -> RFDataViewer.RFData.create_rf_measurement(data_set, meas) end)
 
-    rf_gain
+      rf_measurement
   end
 
   @doc """
