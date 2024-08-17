@@ -30,7 +30,6 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
 
   def handle_event("delete", %{"type" => type}, socket)
       when type == "Gain" or type == "VSWR" do
-
     delete_data = [
       {"Manufacturer", socket.assigns.data_set.test_set.serial_number.unit.manufacturer},
       {"Name", socket.assigns.data_set.test_set.serial_number.unit.name},
@@ -56,7 +55,7 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
     {count, _} =
       case type do
         :gain -> RFData.delete_rf_measurements(socket.assigns.data_set.id, "gain")
-        :vswr -> RFData.delete_rf_vswr(socket.assigns.data_set.id)
+        :vswr -> RFData.delete_rf_measurements(socket.assigns.data_set.id, "vswr")
       end
 
     socket =
@@ -110,10 +109,10 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
         entities =
           transform_data.(path)
           |> Enum.map(fn {freq, measurement} ->
-            %{frequency: freq, vswr: measurement}
+            %{type: "vswr", frequency: freq, value: measurement}
           end)
 
-        {count, _} = RFData.batch_create_rf_vswr(data_set, entities)
+        {count, _} = RFData.batch_create_rf_measurement(data_set, entities)
         {:ok, count}
       end) != []
 
@@ -132,7 +131,8 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
   defp error_to_string(:too_many_files), do: "You have selected too many files"
 
   defp assign_data_set(socket, data_set_id) do
-    {data_set, gain_count, vswr_count} = RFData.get_rf_data_set_with_counts!(data_set_id)
+    %{"data" => data_set, "gain_count" => gain_count, "vswr_count" => vswr_count} =
+      RFData.get_rf_data_set_with_counts!(data_set_id, ["gain", "vswr"])
 
     socket
     |> assign(:data_set, data_set)
@@ -144,11 +144,13 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
   defp assign_update_charts(socket) do
     gain =
       socket.assigns.data_set.measurements
+      |> Enum.filter(&(&1.type == "gain"))
       |> Enum.map(&%{x: &1.frequency, y: &1.value})
 
     vswr =
-      socket.assigns.data_set.vswr
-      |> Enum.map(&%{x: &1.frequency, y: &1.vswr})
+      socket.assigns.data_set.measurements
+      |> Enum.filter(&(&1.type == "vswr"))
+      |> Enum.map(&%{x: &1.frequency, y: &1.value})
 
     socket
     |> push_event("rf-data-generate-chart", %{
@@ -204,10 +206,20 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
   end
 
   defp get_measurements(:gain, data_set_id, criteria),
-    do: get_measurement_data(&RFData.list_rf_measurements/2, data_set_id, criteria ++ [type: "gain"])
+    do:
+      get_measurement_data(
+        &RFData.list_rf_measurements/2,
+        data_set_id,
+        criteria ++ [type: "gain"]
+      )
 
   defp get_measurements(:vswr, data_set_id, criteria),
-    do: get_measurement_data(&RFData.list_rf_vswr/2, data_set_id, criteria)
+    do:
+      get_measurement_data(
+        &RFData.list_rf_measurements/2,
+        data_set_id,
+        criteria ++ [type: "vswr"]
+      )
 
   defp get_measurement_data(context_getter, data_set_id, criteria) do
     data = context_getter.(data_set_id, criteria)

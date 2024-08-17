@@ -9,7 +9,6 @@ defmodule RFDataViewer.RFData do
   alias RFDataViewer.RFData.RFTestSet
   alias RFDataViewer.RFData.RFDataSet
   alias RFDataViewer.RFData.RFMeasurement
-  alias RFDataViewer.RFData.RFVswr
 
   @doc """
   Returns the list of rf_test_set.
@@ -38,15 +37,9 @@ defmodule RFDataViewer.RFData do
         group_by: d.rf_test_set_id,
         select: %{id: d.rf_test_set_id, count: count()}
 
-    gain_subquery =
+    measurements_subquery =
       from m in RFMeasurement,
         join: d in assoc(m, :data_set),
-        group_by: d.rf_test_set_id,
-        select: %{id: d.rf_test_set_id, count: count()}
-
-    vswr_subquery =
-      from v in RFVswr,
-        join: d in assoc(v, :data_set),
         group_by: d.rf_test_set_id,
         select: %{id: d.rf_test_set_id, count: count()}
 
@@ -54,14 +47,12 @@ defmodule RFDataViewer.RFData do
       from t in RFTestSet,
         left_join: d in subquery(data_set_subquery),
         on: d.id == t.id,
-        left_join: g in subquery(gain_subquery),
-        on: g.id == t.id,
-        left_join: v in subquery(vswr_subquery),
-        on: v.id == t.id,
+        left_join: m in subquery(measurements_subquery),
+        on: m.id == t.id,
         where: t.rf_unit_serial_number_id == ^serial_number_id,
         order_by: t.name,
         preload: [serial_number: :unit],
-        select: {t, coalesce(d.count, 0), coalesce(g.count + v.count, 0)}
+        select: {t, coalesce(d.count, 0), coalesce(m.count, 0)}
 
     Repo.all(query)
   end
@@ -97,15 +88,9 @@ defmodule RFDataViewer.RFData do
         group_by: t.id,
         select: %{id: t.id, count: count()}
 
-    gain_subquery =
+    measurements_subquery =
       from m in RFMeasurement,
         join: d in assoc(m, :data_set),
-        group_by: d.rf_test_set_id,
-        select: %{id: d.rf_test_set_id, count: count()}
-
-    vswr_subquery =
-      from v in RFVswr,
-        join: d in assoc(v, :data_set),
         group_by: d.rf_test_set_id,
         select: %{id: d.rf_test_set_id, count: count()}
 
@@ -113,14 +98,12 @@ defmodule RFDataViewer.RFData do
       from t in RFTestSet,
         left_join: d in subquery(data_set_subquery),
         on: d.id == t.id,
-        left_join: g in subquery(gain_subquery),
-        on: g.id == t.id,
-        left_join: v in subquery(vswr_subquery),
-        on: v.id == t.id,
+        left_join: m in subquery(measurements_subquery),
+        on: m.id == t.id,
         where: t.id == ^test_set_id,
         order_by: t.name,
         preload: [serial_number: :unit],
-        select: {t, coalesce(d.count, 0), coalesce(g.count + v.count, 0)}
+        select: {t, coalesce(d.count, 0), coalesce(m.count, 0)}
 
     Repo.one!(query)
   end
@@ -207,6 +190,71 @@ defmodule RFDataViewer.RFData do
   end
 
   @doc """
+  Returns the list of rf_data_set associated with a given rf_test_set_id.
+
+  ## Examples
+
+      iex> list_rf_data_set(1)
+      [%RFDataSet{}, ...]
+
+  """
+  def get_rf_data_sets(test_set_id) do
+    Repo.all(from d in RFDataSet, where: d.rf_test_set_id == ^test_set_id)
+  end
+
+  defguard not_empty_list(list) when is_list(list) and list != []
+
+  @doc """
+  Helper function help compose queries for rf_data_sets with associated rf_measurement counts optionally grouped by measurement type
+
+  ## Examples
+
+      iex> list_rf_data_set()
+      [{"data" => RFDataSet{}, "count" => 10000}, ...]
+
+      iex> list_rf_data_set("vswr")
+      [{"data" => RFDataSet{}, "vswr_count" => 7000}, ...]
+
+      iex> list_rf_data_set(["gain", "vswr"')
+      [{"data" => RFDataSet{}, "gain_count" => 3000, "vswr_count" => 7000}, ...]
+
+  """
+  def get_rf_data_set_with_counts_base(types \\ :all)
+      when not is_nil(types) or not_empty_list(types) or types == :all do
+    query =
+      from d in RFDataSet,
+        order_by: d.name,
+        select: %{"data" => d}
+
+    base_subquery =
+      from m in RFMeasurement,
+        join: d in assoc(m, :data_set),
+        group_by: d.id,
+        select: %{id: d.id, count: count()}
+
+    compose_subquery = fn key, query, subquery ->
+      from q in query,
+        left_join: s in subquery(subquery),
+        on: s.id == q.id,
+        select_merge: %{^key => coalesce(s.count, 0)}
+    end
+
+    if types == :all do
+      compose_subquery.("count", query, base_subquery)
+    else
+      types = if is_list(types), do: types, else: [types]
+
+      Enum.reduce(types, query, fn type, query ->
+        subquery =
+          from s in base_subquery,
+            where: s.type == ^type
+
+        compose_subquery.("#{type}_count", query, subquery)
+      end)
+    end
+  end
+
+  @doc """
   Returns the list of rf_data_sets with counts in form of tuple {data_set, gain_count, vswr_count}.
 
   ## Examples
@@ -215,27 +263,10 @@ defmodule RFDataViewer.RFData do
       [{%RFDataSet{}, 0, 0}, ...]
 
   """
-  def get_rf_data_sets_with_counts(test_set_id) do
-    gain_subquery =
-      from m in RFMeasurement,
-        join: d in assoc(m, :data_set),
-        group_by: d.id,
-        select: %{id: d.id, count: count()}
-
-    vswr_subquery =
-      from v in RFVswr,
-        join: d in assoc(v, :data_set),
-        group_by: d.id,
-        select: %{id: d.id, count: count()}
-
+  def get_rf_data_sets_with_counts(test_set_id, types) do
     query =
-      from d in RFDataSet,
-        left_join: g in subquery(gain_subquery),
-        on: g.id == d.id,
-        left_join: v in subquery(vswr_subquery),
-        on: v.id == d.id,
-        where: d.rf_test_set_id == ^test_set_id,
-        select: {d, coalesce(g.count, 0), coalesce(v.count, 0)}
+      from q in get_rf_data_set_with_counts_base(types),
+        where: q.rf_test_set_id == ^test_set_id
 
     Repo.all(query)
   end
@@ -257,48 +288,24 @@ defmodule RFDataViewer.RFData do
   def get_rf_data_set!(id), do: Repo.get!(RFDataSet, id)
 
   @doc """
-  Gets a single rf_data_set along with gain and VSWR data counts.
-
-  Raises `Ecto.NoResultsError` if the Rf data set does not exist.
+  Returns a single rf_data_sets with counts in form of tuple {data_set, gain_count, vswr_count}.
 
   ## Examples
 
-      iex> get_rf_data_set_with_counts!(123)
-      {%RFDataSet{}, 0, 0}
-
-      iex> get_rf_data_set_with_counts!(456)
-      ** (Ecto.NoResultsError)
+      iex> get_rf_data_sets_with_counts()
+      [{%RFDataSet{}, 0, 0}, ...]
 
   """
-  def get_rf_data_set_with_counts!(id) do
-    gain_subquery =
-      from m in RFMeasurement,
-        join: d in assoc(m, :data_set),
-        group_by: d.id,
-        select: %{id: d.id, count: count()}
-
-    vswr_subquery =
-      from v in RFVswr,
-        join: d in assoc(v, :data_set),
-        group_by: d.id,
-        select: %{id: d.id, count: count()}
-
-    measurement_order = from m in RFMeasurement, where: m.type == "gain", order_by: m.frequency
-    vswr_order = from v in RFVswr, order_by: v.frequency
+  def get_rf_data_set_with_counts!(id, types) do
+    measurement_order = from m in RFMeasurement, order_by: m.frequency
 
     query =
-      from d in RFDataSet,
-        left_join: g in subquery(gain_subquery),
-        on: g.id == d.id,
-        left_join: v in subquery(vswr_subquery),
-        on: v.id == d.id,
+      from q in get_rf_data_set_with_counts_base(types),
+        where: q.id == ^id,
         preload: [
           measurements: ^measurement_order,
-          vswr: ^vswr_order,
           test_set: [serial_number: :unit]
-        ],
-        where: d.id == ^id,
-        select: {d, coalesce(g.count, 0), coalesce(v.count, 0)}
+        ]
 
     Repo.one(query)
   end
@@ -540,150 +547,5 @@ defmodule RFDataViewer.RFData do
   """
   def change_rf_measurement(%RFMeasurement{} = rf_measurement, attrs \\ %{}) do
     RFMeasurement.changeset(rf_measurement, attrs)
-  end
-
-  alias RFDataViewer.RFData.RFVswr
-
-  @doc """
-  Returns the list of rf_vswr.
-
-  ## Examples
-
-      iex> list_rf_vswr()
-      [%RFVswr{}, ...]
-
-  """
-  def list_rf_vswr do
-    Repo.all(RFVswr)
-  end
-
-  def list_rf_vswr(data_set_id) when is_integer(data_set_id) do
-    from(v in RFVswr, where: v.rf_data_set_id == ^data_set_id, order_by: v.frequency)
-    |> Repo.all()
-  end
-
-  def list_rf_vswr(data_set_id, criteria) when is_integer(data_set_id) and is_list(criteria) do
-    from(v in RFVswr, where: v.rf_data_set_id == ^data_set_id, order_by: v.frequency)
-    |> compose_list_measurements(criteria)
-    |> Repo.all()
-  end
-
-  @doc """
-  Gets a single rf_vswr.
-
-  Raises `Ecto.NoResultsError` if the Rf vswr does not exist.
-
-  ## Examples
-
-      iex> get_rf_vswr!(123)
-      %RFVswr{}
-
-      iex> get_rf_vswr!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_rf_vswr!(id), do: Repo.get!(RFVswr, id)
-
-  @doc """
-  Creates a rf_vswr.
-
-  ## Examples
-
-      iex> create_rf_vswr(%{field: value})
-      {:ok, %RFVswr{}}
-
-      iex> create_rf_vswr(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def create_rf_vswr(%RFDataSet{} = rf_data_set, attrs \\ %{}) do
-    rf_data_set
-    |> Ecto.build_assoc(:vswr, attrs)
-    |> RFVswr.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  def batch_create_rf_vswr(%RFDataSet{} = rf_data_set, entries \\ []) do
-    changesets =
-      entries
-      |> Enum.map(fn attrs ->
-        rf_data_set
-        |> Ecto.build_assoc(:vswr, attrs)
-        |> RFVswr.changeset(attrs)
-      end)
-
-    valid? = not Enum.any?(changesets, &(not &1.valid?))
-
-    if valid? do
-      date = DateTime.truncate(DateTime.utc_now(), :second)
-
-      Repo.insert_all(
-        RFVswr,
-        changesets
-        |> Enum.map(
-          &%{
-            frequency: &1.data.frequency,
-            vswr: &1.data.vswr,
-            rf_data_set_id: &1.data.rf_data_set_id,
-            inserted_at: date,
-            updated_at: date
-          }
-        )
-      )
-    else
-      {0, Enum.filter(changesets, &(not &1.valid?))}
-    end
-  end
-
-  @doc """
-  Updates a rf_vswr.
-
-  ## Examples
-
-      iex> update_rf_vswr(rf_vswr, %{field: new_value})
-      {:ok, %RFVswr{}}
-
-      iex> update_rf_vswr(rf_vswr, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_rf_vswr(%RFVswr{} = rf_vswr, attrs) do
-    rf_vswr
-    |> RFVswr.changeset(attrs)
-    |> Repo.update()
-  end
-
-  def delete_rf_vswr(data_set_id) when is_integer(data_set_id) do
-    from(v in RFVswr, where: v.rf_data_set_id == ^data_set_id)
-    |> Repo.delete_all()
-  end
-
-  @doc """
-  Deletes a rf_vswr.
-
-  ## Examples
-
-      iex> delete_rf_vswr(rf_vswr)
-      {:ok, %RFVswr{}}
-
-      iex> delete_rf_vswr(rf_vswr)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_rf_vswr(%RFVswr{} = rf_vswr) do
-    Repo.delete(rf_vswr)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking rf_vswr changes.
-
-  ## Examples
-
-      iex> change_rf_vswr(rf_vswr)
-      %Ecto.Changeset{data: %RFVswr{}}
-
-  """
-  def change_rf_vswr(%RFVswr{} = rf_vswr, attrs \\ %{}) do
-    RFVswr.changeset(rf_vswr, attrs)
   end
 end

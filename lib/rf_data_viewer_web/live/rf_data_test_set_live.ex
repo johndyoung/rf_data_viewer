@@ -11,8 +11,6 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
       ) do
     {ts, ds_count, data_count} = RFDataViewer.RFData.get_rf_test_set_with_count!(ts_id)
 
-    ds = get_data_set_list(user, ts_id)
-
     empty_ds = %RFDataSet{}
     empty_changeset = RFData.change_rf_data_set(empty_ds)
 
@@ -21,9 +19,9 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
      |> assign(
        test_set: ts,
        data_set_count: ds_count,
-       data_count: data_count,
-       data_sets: ds
+       data_count: data_count
      )
+     |> assign_data_set_list(user, ts_id)
      |> assign(:check_errors, false)
      |> assign(:delete_data, [])
      |> assign_modal_id("")
@@ -85,7 +83,7 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
       {:ok, ds} ->
         {:noreply,
          socket
-         |> assign(:data_sets, get_data_set_list(user, ds.rf_test_set_id))
+         |> assign_data_set_list(user, ds.rf_test_set_id)
          |> assign_edit_ds(%RFDataSet{})
          |> push_close_modal("delete-ds")}
 
@@ -125,16 +123,22 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
 
     case response do
       {:ok, ds} ->
-        # entries from get_data_set_list/2 are of the form {sn, gain_count, vswr_count, date_local}
-        ds_tuple = {ds, 0, 0, Users.convert_time_to_user_time(user, ds.date)}
+        # match map format of :data_sets data
+        ds_data = %{
+          "data" => ds,
+          "gain_count" => 0,
+          "vswr_count" => 0,
+          "local_datetime" => Users.convert_time_to_user_time(user, ds.date)
+        }
+
         empty_ds = %RFDataSet{}
         empty_changeset = RFData.change_rf_data_set(empty_ds)
 
         # currently adding new data set to head of list... for updates, just re-query.
         socket =
           if is_nil(edit_ds.id),
-            do: update(socket, :data_sets, fn sets -> [ds_tuple | sets] end),
-            else: assign(socket, :data_sets, get_data_set_list(user, ts.id))
+            do: update(socket, :data_sets, fn sets -> [ds_data | sets] end),
+            else: assign_data_set_list(socket, user, ts.id)
 
         {:noreply,
          socket
@@ -152,11 +156,14 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end
 
-  defp get_data_set_list(user, test_set_id) do
-    RFDataViewer.RFData.get_rf_data_sets_with_counts(test_set_id)
-    |> Enum.map(fn {set, _, _} = data ->
-      Tuple.append(data, Users.convert_time_to_user_time(user, set.date))
-    end)
+  defp assign_data_set_list(socket, user, test_set_id) do
+    data =
+      RFDataViewer.RFData.get_rf_data_sets_with_counts(test_set_id, ["gain", "vswr"])
+      |> Enum.map(fn %{"data" => set} = data ->
+        Map.put(data, "local_datetime", Users.convert_time_to_user_time(user, set.date))
+      end)
+
+    assign(socket, :data_sets, data)
   end
 
   defp assign_local_datetime(socket, user, utc_datetime) do

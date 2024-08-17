@@ -8,7 +8,6 @@ defmodule RFDataViewer.RFData.RFDataSet do
     field :description, :string
     belongs_to :test_set, RFDataViewer.RFData.RFTestSet, foreign_key: :rf_test_set_id
     has_many :measurements, RFDataViewer.RFData.RFMeasurement
-    has_many :vswr, RFDataViewer.RFData.RFVswr
 
     timestamps(type: :utc_datetime)
   end

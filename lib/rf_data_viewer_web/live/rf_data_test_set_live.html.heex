@@ -142,7 +142,7 @@
     </thead>
     
     <tbody>
-      <%= for {data_set, gain_count, vswr_count, date_local} <- @data_sets do %>
+      <%= for %{"data" => data_set, "gain_count" => gain_count, "vswr_count" => vswr_count, "local_datetime" => date_local} <- @data_sets do %>
         <tr Key={data_set.id} class="bg-light border-b font-medium">
           <td class="px-6 py-4">
             <div class="flex space-x-2">
