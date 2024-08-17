@@ -90,6 +90,9 @@ defmodule RFDataViewerWeb do
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS
 
+      # app specific stuff
+      import RFDataViewerWeb.ModalControlComponent
+
       # Routes generation with the ~p sigil
       unquote(verified_routes())
     end

@@ -201,20 +201,6 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
     {data, highest_freq}
   end
 
-  defp assign_modal_id(socket, modal_id), do: assign(socket, :modal_id, modal_id)
-
-  defp push_open_modal(socket, modal_id),
-    do:
-      socket
-      |> assign_modal_id(modal_id)
-      |> push_event("rf-unit-open-modal", Map.new())
-
-  defp push_close_modal(socket, modal_id),
-    do:
-      socket
-      |> assign_modal_id(modal_id)
-      |> push_event("rf-unit-close-modal", Map.new())
-
   defp assign_local_datetime(socket, user) do
     local_datetime = Users.convert_time_to_user_time(user, socket.assigns.data_set.date)
     assign(socket, :local_datetime, local_datetime)

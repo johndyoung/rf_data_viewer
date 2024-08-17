@@ -1,10 +1,5 @@
+<.modal_control modal_id={@modal_id} />
 <div class="ml-1 mb-6">
-  <div
-    id="modal-control"
-    class="hidden"
-    data-open-modal={show_modal(@modal_id)}
-    data-close-modal={hide_modal(@modal_id)}
-  />
   <button
     phx-click="create"
     class="bg-medium-light text-slate-700 hover:bg-light rounded-full px-4 py-2 font-semibold"
@@ -18,7 +13,7 @@
     <.error :if={@check_errors}>
       Please check the errors below.
     </.error>
-     <.input field={@form[:manufacturer]} type="text" label="Manufacturer" required autofocus />
+    <.input field={@form[:manufacturer]} type="text" label="Manufacturer" required autofocus />
     <.input field={@form[:name]} type="text" label="Name" required />
     <.input field={@form[:description]} type="text" label="Description" required />
     <:actions>
@@ -58,6 +53,7 @@
     >
       Delete RF Unit
     </button>
+    
     <button
       phx-click="cancel_delete"
       class="bg-medium-light text-slate-700 hover:bg-medium rounded-full px-4 py-2 mx-2 font-semibold"

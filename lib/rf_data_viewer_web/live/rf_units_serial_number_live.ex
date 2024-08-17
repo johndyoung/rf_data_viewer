@@ -121,20 +121,6 @@ defmodule RFDataViewerWeb.RFUnitsSerialNumberLive do
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end
 
-  defp assign_modal_id(socket, modal_id), do: assign(socket, :modal_id, modal_id)
-
-  defp push_open_modal(socket, modal_id),
-    do:
-      socket
-      |> assign_modal_id(modal_id)
-      |> push_event("rf-unit-open-modal", Map.new())
-
-  defp push_close_modal(socket, modal_id),
-    do:
-      socket
-      |> assign_modal_id(modal_id)
-      |> push_event("rf-unit-close-modal", Map.new())
-
   defp assign_edit_ts(socket, %RFTestSet{} = ts), do: assign(socket, :edit_ts, ts)
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do

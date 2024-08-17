@@ -152,20 +152,6 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
     assign(socket, :local_datetime, local_datetime)
   end
 
-  defp assign_modal_id(socket, modal_id), do: assign(socket, :modal_id, modal_id)
-
-  defp push_open_modal(socket, modal_id),
-    do:
-      socket
-      |> assign_modal_id(modal_id)
-      |> push_event("rf-unit-open-modal", Map.new())
-
-  defp push_close_modal(socket, modal_id),
-    do:
-      socket
-      |> assign_modal_id(modal_id)
-      |> push_event("rf-unit-close-modal", Map.new())
-
   defp assign_edit_ds(socket, %RFDataSet{} = ds), do: assign(socket, :edit_ds, ds)
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
