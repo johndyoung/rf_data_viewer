@@ -61,7 +61,8 @@ defmodule RFDataViewer.MixProject do
       {:bandit, "~> 1.5"},
       {:pbkdf2_elixir, "~> 2.0"},
       {:timex, "~> 3.0"},
-      {:csv, "~> 3.2"}
+      {:csv, "~> 3.2"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 
