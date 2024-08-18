@@ -82,38 +82,14 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
   end
 
   def handle_event("save", _params, %{assigns: %{data_set: data_set}} = socket) do
-    transform_data = fn path ->
-      File.stream!(path)
-      |> CSV.decode!()
-      |> Stream.drop(1)
-      |> Enum.map(&List.to_tuple(&1))
-      |> Enum.map(fn {freq, measurement} ->
-        {String.to_integer(freq), elem(Float.parse(measurement), 0)}
-      end)
-    end
-
     gain? =
       consume_uploaded_entries(socket, :gain_upload, fn %{path: path}, _entry ->
-        entities =
-          transform_data.(path)
-          |> Enum.map(fn {freq, measurement} ->
-            %{type: "gain", frequency: freq, value: measurement}
-          end)
-
-        {count, _} = RFData.batch_create_rf_measurement(data_set, entities)
-        {:ok, count}
+        add_measurements_from_file(data_set, path, "gain")
       end) != []
 
     vswr? =
       consume_uploaded_entries(socket, :vswr_upload, fn %{path: path}, _entry ->
-        entities =
-          transform_data.(path)
-          |> Enum.map(fn {freq, measurement} ->
-            %{type: "vswr", frequency: freq, value: measurement}
-          end)
-
-        {count, _} = RFData.batch_create_rf_measurement(data_set, entities)
-        {:ok, count}
+        add_measurements_from_file(data_set, path, "vswr")
       end) != []
 
     socket = if gain?, do: assign_measurements(socket, :gain), else: socket
@@ -124,6 +100,27 @@ defmodule RFDataViewerWeb.RFDataDataSetLive do
       |> assign_data_set(data_set.id)
 
     {:noreply, socket}
+  end
+
+  defp add_measurements_from_file(data_set, path, type) do
+    transform_data = fn path ->
+      File.stream!(path)
+      |> CSV.decode!()
+      |> Stream.drop(1)
+      |> Enum.map(&List.to_tuple(&1))
+      |> Enum.map(fn {freq, measurement} ->
+        {String.to_integer(freq), elem(Float.parse(measurement), 0)}
+      end)
+    end
+
+    entities =
+      transform_data.(path)
+      |> Enum.map(fn {freq, measurement} ->
+        %{type: type, frequency: freq, value: measurement}
+      end)
+
+    {count, _} = RFData.batch_create_rf_measurement(data_set, entities)
+    {:ok, count}
   end
 
   defp error_to_string(:too_large), do: "File is too large"
