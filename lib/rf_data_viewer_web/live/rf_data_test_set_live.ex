@@ -1,8 +1,13 @@
 defmodule RFDataViewerWeb.RFDataTestSetLive do
+  alias RFDataViewer.RFData.RFMeasurement
+  alias RFDataViewer.Repo
+  alias Phoenix.LiveView.AsyncResult
   use RFDataViewerWeb, :live_view
   alias RFDataViewer.RFData
   alias RFDataViewer.RFData.RFDataSet
   alias RFDataViewer.Users
+
+  @manifest_file_name "manifest.csv"
 
   def mount(
         %{"test_set_id" => ts_id} = _params,
@@ -14,20 +19,48 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
     empty_ds = %RFDataSet{}
     empty_changeset = RFData.change_rf_data_set(empty_ds)
 
-    {:ok,
-     socket
-     |> assign(
-       test_set: ts,
-       data_set_count: ds_count,
-       data_count: data_count
-     )
-     |> assign_data_set_list(user, ts_id)
-     |> assign(:check_errors, false)
-     |> assign(:delete_data, [])
-     |> assign_modal_id("")
-     |> assign_local_datetime(user, Timex.now())
-     |> assign_edit_ds(empty_ds)
-     |> assign_form(empty_changeset)}
+    socket =
+      socket
+      |> assign(
+        test_set: ts,
+        data_set_count: ds_count,
+        data_count: data_count
+      )
+      |> init_upload()
+      |> assign_data_set_list(user, ts_id)
+      |> assign(:check_errors, false)
+      |> assign(:delete_data, [])
+      |> assign_modal_id("")
+      |> assign_local_datetime(user, Timex.now())
+      |> assign_edit_ds(empty_ds)
+      |> assign_form(empty_changeset)
+
+    {:ok, socket}
+  end
+
+  defp init_upload(socket) do
+    socket
+    |> assign(
+      manifest_file_name: @manifest_file_name,
+      files: [],
+      upload_count: nil,
+      upload_errors: 0,
+      uploaded: 0,
+      upload_progress: 0,
+      manifest_file: nil,
+      status: nil,
+      processing: false,
+      temp_dir: nil
+    )
+    |> allow_upload(:dir,
+      accept: ~w(.csv),
+      # 500 files plus a manifest file. users with junky directories can just clean their stuff up!
+      max_entries: 501,
+      # 1 MB max file size
+      max_file_size: 1_000_000_000_000,
+      auto_upload: true,
+      progress: &handle_progress/3
+    )
   end
 
   def handle_event("create", _params, %{assigns: %{current_user: user}} = socket) do
@@ -156,6 +189,374 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end
 
+  # def handle_event("cancel_upload", %{"ref" => ref}, socket) do
+  #   {:noreply, cancel_upload(socket, :dir, ref)}
+  # end
+
+  def handle_event("files-selected", _, socket) do
+    # remove subdirectories and invalid uploads
+    socket =
+      Enum.reduce(socket.assigns.uploads.dir.entries, socket, fn entry, socket ->
+        path_components = Path.split(entry.client_relative_path)
+        # relative client path always includes the directory in which the file resides,
+        # so we expect exactly two components for the top-level upload directory.
+        if length(path_components) == 2 && entry.valid?,
+          do: socket,
+          else: cancel_upload(socket, :dir, entry.ref)
+      end)
+
+    socket =
+      socket
+      |> assign(:upload_count, length(socket.assigns.uploads.dir.entries))
+      |> assign(:upload_errors, length(socket.assigns.uploads.dir.errors))
+
+    socket =
+      if socket.assigns.upload_count > 0,
+        do: assign(socket, :status, "Uploading and processing files..."),
+        else: socket
+
+    {:noreply, socket}
+  end
+
+  def handle_progress(:dir, entry, socket) do
+    valid_uploads = socket.assigns.upload_count - socket.assigns.upload_errors
+
+    socket =
+      assign(
+        socket,
+        :upload_progress,
+        (socket.assigns.uploaded / valid_uploads * 100)
+        |> Float.round(2)
+      )
+
+    socket =
+      if entry.done? do
+        socket =
+          socket
+          |> assign(:uploaded, socket.assigns.uploaded + 1)
+          |> assign(:files, socket.assigns.files ++ [entry.client_name])
+
+        case entry.client_name do
+          @manifest_file_name when not is_nil(socket.assigns.manifest_file) ->
+            # detected multiple manifest files
+            assign(socket, :manifest_file, :multiple)
+
+          @manifest_file_name ->
+            # found manifest file!
+            assign(socket, :manifest_file, entry)
+
+          _ ->
+            socket.assigns.uploads.dir.entries
+            socket
+        end
+      else
+        socket
+      end
+
+    socket =
+      case socket.assigns.uploaded do
+        ^valid_uploads when is_nil(socket.assigns.manifest_file) ->
+          # no manifest file found
+          socket
+          |> cancel_uploads()
+          |> assign_redirect_self()
+          |> put_flash(:error, "No manifest file found. See Upload Requirements.")
+
+        ^valid_uploads when socket.assigns.manifest_file == :multiple ->
+          # detected multiple manifest files
+          socket
+          |> cancel_uploads()
+          |> assign_redirect_self()
+          |> put_flash(:error, "Multiple manifest files detected.")
+
+        ^valid_uploads ->
+          # valid so far, start processing files
+          process_uploads(socket)
+
+        _ ->
+          # still uploading files
+          socket
+      end
+
+    {:noreply, socket}
+  end
+
+  defp cancel_uploads(socket) do
+    Enum.reduce(socket.assigns.uploads.dir.entries, socket, fn file, socket ->
+      cancel_upload(socket, :dir, file.ref)
+    end)
+  end
+
+  defp process_uploads(socket) do
+    # entry = %Phoenix.LiveView.UploadEntry{
+    #   progress: 100,
+    #   preflighted?: true,
+    #   upload_config: :dir,
+    #   upload_ref: "phx-F-zZY7POCOgpuG9F",
+    #   ref: "38",
+    #   uuid: "2e703d43-1bdc-4cbf-819b-e70cee09f970",
+    #   valid?: true,
+    #   done?: true,
+    #   cancelled?: false,
+    #   client_name: "RFIA_SN_A0101_Test_20240319_VSWR_S11_89.csv",
+    #   client_relative_path: "20240319_Gain_Failures/RFIA_SN_A0101_Test_20240319_VSWR_S11_89.csv",
+    #   client_size: 55148,
+    #   client_type: "text/csv",
+    #   client_last_modified: 1712270100000,
+    #   client_meta: nil
+    # }
+
+    # copy all data to temp directory  and then spawn process to... process the data.
+    dest_dir =
+      Path.join(Application.app_dir(:rf_data_viewer, "priv/static/uploads"), UUID.uuid1())
+
+    File.mkdir!(dest_dir)
+
+    uploaded_files =
+      consume_uploaded_entries(socket, :dir, fn %{path: path}, entry ->
+        dest = Path.join(dest_dir, entry.client_name)
+        File.cp!(path, dest)
+        {:ok, dest}
+      end)
+
+    # transform the manifest file into usable data
+    manifest_data =
+      read_csv_file(Path.join(dest_dir, @manifest_file_name))
+      |> Enum.map(
+        &extract_manifest_errors(socket.assigns.current_user.timezone, uploaded_files, &1)
+      )
+
+    # validate the manifest file
+    {result, data} =
+      if Enum.any?(manifest_data, fn tuple -> elem(tuple, 0) == :error end),
+        do: {:error, manifest_data},
+        else: {:ok, Enum.map(manifest_data, fn {_, row, _} -> row end)}
+
+    if result == :ok do
+      # manifest file looks good, process the other files
+      valid_uploads = socket.assigns.upload_count - socket.assigns.upload_errors
+      test_set_id = socket.assigns.test_set.id
+
+      case length(uploaded_files) do
+        ^valid_uploads ->
+          # manifest file is good and all valid uploads successful
+          socket
+          |> assign(:processing, true)
+          |> assign(:status, "Processing files...")
+          |> assign(:temp_dir, dest_dir)
+          |> start_async(:processing_files, fn ->
+            process_files!(test_set_id, data, dest_dir)
+          end)
+
+        _ ->
+          # some expected valid uploads failed
+
+          File.rm_rf!(dest_dir)
+
+          socket
+          |> put_flash(:error, "Failed upload.")
+          |> assign_redirect_self()
+      end
+    else
+      # bad manifest file
+      socket
+      |> put_flash(:error, build_manifest_error_messages(data))
+      |> assign_redirect_self()
+    end
+  end
+
+  defp process_files!(test_set_id, manifest_data, dir) do
+    # build map keyed off files names
+    # manifest_map =
+    #   Enum.reduce(manifest_data, %{}, fn row, map ->
+    #     map
+    #     |> Map.put_new(row.gain_file, row)
+    #     |> Map.put_new(row.vswr_file, row)
+    #   end)
+
+    # start building our transaction...
+    multi = Ecto.Multi.new()
+
+    {multi, _} =
+      Enum.reduce(manifest_data, {multi, 0}, &build_queries(&1, &2, test_set_id, dir))
+
+    Repo.transaction(multi, timeout: :infinity)
+
+    :ok
+    # raise "pooped the bed"
+  end
+
+  defp build_queries(row, {multi, i}, test_set_id, dir) do
+    data = %{
+      rf_test_set_id: test_set_id,
+      name: row.test_name,
+      description: row.test_desc,
+      date: row.test_local_date
+    }
+
+    changeset = RFData.change_rf_data_set(%RFDataSet{}, data)
+
+    multi =
+      Ecto.Multi.insert(multi, {:rf_data_set, row.test_name, i}, changeset)
+      |> Ecto.Multi.merge(fn data ->
+        {_, parent} = Enum.find(data, fn {key, _} -> key == {:rf_data_set, row.test_name, i} end)
+
+        [{"gain", row.gain_file}, {"vswr", row.vswr_file}]
+        |> Enum.reduce(multi, &build_measurement_queries(&1, &2, dir, parent))
+      end)
+
+    {multi, i}
+  end
+
+  def build_measurement_queries({type, file}, multi, dir, parent) do
+    {multi, _} =
+      read_csv_file(Path.join(dir, file))
+      |> Enum.reduce({multi, 0}, fn {freq, measurement}, {multi, i} ->
+        measurement = %{
+          rf_data_set_id: parent.id,
+          type: type,
+          frequency: String.to_integer(freq),
+          value: elem(Float.parse(measurement), 0)
+        }
+
+        changeset = RFData.change_rf_measurement(%RFMeasurement{}, measurement)
+
+        i = i + 1
+
+        multi =
+          Ecto.Multi.insert(
+            multi,
+            {:rf_measurement, parent.id, type, i},
+            changeset
+          )
+
+        {multi, i}
+      end)
+
+    multi
+  end
+
+  def handle_async(:processing_files, {:ok, _}, socket) do
+    File.rm_rf!(socket.assigns.temp_dir)
+
+    socket =
+      socket
+      |> assign(:temp_dir, nil)
+      |> assign(:processing, false)
+      |> init_upload()
+      |> put_flash(:info, "Processed uploaded data!")
+
+    {:noreply, socket}
+  end
+
+  def handle_async(:processing_files, {:exit, {reason, _}}, socket) do
+    File.rm_rf!(socket.assigns.temp_dir)
+
+    socket =
+      socket
+      |> assign(:temp_dir, nil)
+      |> assign(:processing, :error)
+      |> init_upload()
+      |> put_flash(:error, "Failed to process uploaded data: #{reason.message}")
+
+    {:noreply, socket}
+  end
+
+  defp read_csv_file(path, header_row? \\ true) do
+    drop_rows = if header_row?, do: 1, else: 0
+
+    File.stream!(path)
+    |> CSV.decode!()
+    |> Stream.drop(drop_rows)
+    |> Enum.map(&List.to_tuple(&1))
+  end
+
+  defp extract_manifest_errors(
+         timezone,
+         uploaded_files,
+         {test_name, test_desc, test_date, gain_file, vswr_file}
+       ) do
+    test_name = safe_to_string(html_escape(test_name))
+    test_desc = safe_to_string(html_escape(test_desc))
+
+    test_date =
+      safe_to_string(html_escape(test_date))
+      |> Timex.parse("{RFC3339}")
+      |> add_timezone(timezone)
+      |> add_timezone(:utc)
+
+    gain_file = safe_to_string(html_escape(gain_file))
+    vswr_file = safe_to_string(html_escape(vswr_file))
+
+    row_data = %{
+      test_name: test_name,
+      test_desc: test_desc,
+      test_local_date: test_date,
+      gain_file: gain_file,
+      vswr_file: vswr_file
+    }
+
+    errors =
+      %{
+        "Test Name" => String.length(test_name) > 0,
+        "Test Description" => String.length(test_desc) > 0,
+        "Test Date" => not is_tuple(test_date),
+        "Gain File Name" =>
+          length(
+            Enum.filter(
+              uploaded_files,
+              &(Path.basename(&1) == gain_file)
+            )
+          ) == 1,
+        "VSWR File Name" =>
+          length(
+            Enum.filter(
+              uploaded_files,
+              &(Path.basename(&1) == vswr_file)
+            )
+          ) == 1
+      }
+      |> Enum.filter(fn {_, result} -> result != true end)
+      |> Enum.map(fn {key, _} -> key end)
+      |> Enum.to_list()
+
+    if length(errors) == 0,
+      do: {:ok, row_data, []},
+      else: {:error, row_data, errors}
+  end
+
+  defp build_manifest_error_messages(manifest_data) do
+    Enum.reduce(manifest_data, [], fn {row_result, %{test_name: row_test_name}, row_errors},
+                                      error_messages ->
+      case row_result do
+        :ok ->
+          error_messages
+
+        _ ->
+          li_begin = "<li class=\"pl-5 text-sm\">"
+
+          row_error_message =
+            row_errors
+            |> Enum.reverse()
+            |> Enum.join("</li>#{li_begin}")
+            |> (&"<div class=\"text-sm\">Error with entry #{row_test_name}<ul>#{li_begin}#{&1}</li></ul></div>").()
+
+          [
+            row_error_message
+            | error_messages
+          ]
+      end
+    end)
+    |> Enum.reverse()
+    |> Enum.join()
+    |> (&"<span class=\"font-semibold\">Manifest file errors:</span>#{&1}").()
+    |> raw()
+  end
+
+  defp error_to_string(:too_large), do: "File is too large"
+  defp error_to_string(:not_accepted), do: "You have selected an unacceptable file type"
+  defp error_to_string(:too_many_files), do: "You have selected too many files"
+
   defp assign_data_set_list(socket, user, test_set_id) do
     data =
       RFDataViewer.RFData.get_rf_data_sets_with_counts(test_set_id, ["gain", "vswr"])
@@ -175,6 +576,9 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset),
     do: RFDataViewerWeb.FormHelper.assign_form(socket, "ds", changeset)
+
+  defp assign_redirect_self(socket),
+    do: redirect(socket, to: "/rf/data/test_set/#{socket.assigns.test_set.id}")
 
   defp add_timezone(datetime, timezone) do
     with {:ok, time} <- datetime do

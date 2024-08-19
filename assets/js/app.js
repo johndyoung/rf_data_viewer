@@ -28,7 +28,6 @@ hooks.InfiniteScroll = {
   loadMore(entries) {
     const target = entries[0];
     if (target.isIntersecting && !this.el.disabled) {
-      console.log(this.el.id)
       this.el.click();
     }
   },
@@ -36,11 +35,19 @@ hooks.InfiniteScroll = {
     this.observer = new IntersectionObserver((entries) =>
       this.loadMore(entries)
     );
-    console.log(this.el.id)
     this.observer.observe(this.el);
   },
   beforeDestroy() {
     this.observer.unobserve(this.el);
+  },
+};
+
+hooks.MultiFileUpload = {
+  mounted() {
+    this.el.addEventListener("input", (e) => {
+      e.preventDefault();
+      this.upload("dir", e.target.files);
+    });
   },
 };
 

@@ -114,6 +114,70 @@
   </table>
 </div>
 
+<.modal id="manifest-format">
+  <div class="justify-stretch items-center text-center space-y-3">
+    <p class="font-semibold">Manifest CSV file format:</p>
+    
+    <p class="font-mono">
+      "Test Data Name","Test Data Description","Test Data DateTime","Gain File Name","VSWR File Name"
+    </p>
+    
+    <p class="text-left">
+      Where dates are in
+      <a
+        href="https://datatracker.ietf.org/doc/html/rfc3339"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="underline hover:text-slate-500"
+      >
+        RFS 3339 format
+      </a>
+    </p>
+    
+    <p class="text-left">
+      <a
+        href="/files/manifest.csv"
+        phx-click={hide_modal("manifest-format")}
+        class="underline hover:text-slate-500"
+      >
+        Download example manfiest.csv
+      </a>
+    </p>
+  </div>
+</.modal>
+
+<div class="flex justify-between items-center bg-light mt-3 mb-3 p-5 rounded-lg">
+  <div class="text-slate-900 space-y-3">
+    <details>
+      <summary class="font-semibold">Upload Requirements</summary>
+      
+      <p>
+        Test data directory must contain a "<%= @manifest_file_name %>" file of the appropriate
+        <button phx-click={show_modal("manifest-format")} class="underline hover:text-slate-500">
+          format
+        </button>
+      </p>
+      
+      <p>
+        Sub-directories are <strong>not</strong> processed.
+      </p>
+    </details>
+     <%!-- upload form --%>
+    <form phx-change="files-selected">
+      <p :if={@status}><%= @status %></p>
+      
+      <div class={@status && "hidden"}>
+        <.live_file_input upload={@uploads.dir} class="hidden" />
+        <input id="dir" type="file" webkitdirectory={true} phx-hook="MultiFileUpload" />
+      </div>
+    </form>
+    
+    <p class={@processing && "hidden"}>
+      Upload Progress: <progress max="100" value={@upload_progress} /> <%= @upload_progress %>%
+    </p>
+  </div>
+</div>
+
 <div class="relative overflow-x-auto rounded-lg">
   <table class="w-full text-sm text-left text-slate-700">
     <thead class="text-xs uppercase bg-medium-light">
