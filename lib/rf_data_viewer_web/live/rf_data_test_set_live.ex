@@ -1,8 +1,6 @@
 defmodule RFDataViewerWeb.RFDataTestSetLive do
-  alias RFDataViewer.RFData.RFMeasurement
-  alias RFDataViewer.Repo
-  alias Phoenix.LiveView.AsyncResult
   use RFDataViewerWeb, :live_view
+  alias RFDataViewer.Repo
   alias RFDataViewer.RFData
   alias RFDataViewer.RFData.RFDataSet
   alias RFDataViewer.Users
@@ -170,11 +168,11 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
         {ts, ds_count, data_count} = RFDataViewer.RFData.get_rf_test_set_with_count!(ts.id)
 
         socket =
-         socket
+          socket
           |> assign_test_set_metadata(ts, ds_count, data_count)
           |> assign_data_set_list(user, ts.id)
-         |> assign_edit_ds(empty_ds)
-         |> assign_form(empty_changeset)
+          |> assign_edit_ds(empty_ds)
+          |> assign_form(empty_changeset)
           |> push_close_modal("ds-form-container")
 
         {:noreply, socket}
@@ -288,24 +286,6 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
   end
 
   defp process_uploads(socket) do
-    # entry = %Phoenix.LiveView.UploadEntry{
-    #   progress: 100,
-    #   preflighted?: true,
-    #   upload_config: :dir,
-    #   upload_ref: "phx-F-zZY7POCOgpuG9F",
-    #   ref: "38",
-    #   uuid: "2e703d43-1bdc-4cbf-819b-e70cee09f970",
-    #   valid?: true,
-    #   done?: true,
-    #   cancelled?: false,
-    #   client_name: "RFIA_SN_A0101_Test_20240319_VSWR_S11_89.csv",
-    #   client_relative_path: "20240319_Gain_Failures/RFIA_SN_A0101_Test_20240319_VSWR_S11_89.csv",
-    #   client_size: 55148,
-    #   client_type: "text/csv",
-    #   client_last_modified: 1712270100000,
-    #   client_meta: nil
-    # }
-
     # copy all data to temp directory  and then spawn process to... process the data.
     dest_dir =
       Path.join(Application.app_dir(:rf_data_viewer, "priv/static/uploads"), UUID.uuid1())
@@ -350,7 +330,6 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
 
         _ ->
           # some expected valid uploads failed
-
           File.rm_rf!(dest_dir)
 
           socket
@@ -359,6 +338,8 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
       end
     else
       # bad manifest file
+      File.rm_rf!(dest_dir)
+
       socket
       |> put_flash(:error, build_manifest_error_messages(data))
       |> assign_redirect_self()
@@ -366,27 +347,11 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
   end
 
   defp process_files!(test_set_id, manifest_data, dir) do
-    # build map keyed off files names
-    # manifest_map =
-    #   Enum.reduce(manifest_data, %{}, fn row, map ->
-    #     map
-    #     |> Map.put_new(row.gain_file, row)
-    #     |> Map.put_new(row.vswr_file, row)
-    #   end)
-
-    # start building our transaction...
-    multi = Ecto.Multi.new()
-
-    {multi, _} =
-      Enum.reduce(manifest_data, {multi, 0}, &build_queries(&1, &2, test_set_id, dir))
-
-    Repo.transaction(multi, timeout: :infinity)
-
+    Enum.each(manifest_data, &build_queries(&1, test_set_id, dir))
     :ok
-    # raise "pooped the bed"
   end
 
-  defp build_queries(row, {multi, i}, test_set_id, dir) do
+  defp build_queries(row, test_set_id, dir) do
     data = %{
       rf_test_set_id: test_set_id,
       name: row.test_name,
@@ -396,44 +361,36 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
 
     changeset = RFData.change_rf_data_set(%RFDataSet{}, data)
 
-    multi =
-      Ecto.Multi.insert(multi, {:rf_data_set, row.test_name, i}, changeset)
-      |> Ecto.Multi.merge(fn data ->
-        {_, parent} = Enum.find(data, fn {key, _} -> key == {:rf_data_set, row.test_name, i} end)
+    multi = Ecto.Multi.new()
 
+    multi =
+      Ecto.Multi.insert(multi, :rf_data_set, changeset)
+      |> Ecto.Multi.merge(fn %{rf_data_set: parent} ->
         [{"gain", row.gain_file}, {"vswr", row.vswr_file}]
         |> Enum.reduce(multi, &build_measurement_queries(&1, &2, dir, parent))
       end)
 
-    {multi, i}
+    Repo.transaction(multi)
   end
 
   def build_measurement_queries({type, file}, multi, dir, parent) do
-    {multi, _} =
+    # {multi, _} =
+    measurements =
       read_csv_file(Path.join(dir, file))
-      |> Enum.reduce({multi, 0}, fn {freq, measurement}, {multi, i} ->
+      |> Enum.reduce([], fn {freq, measurement}, list ->
         measurement = %{
-          rf_data_set_id: parent.id,
           type: type,
           frequency: String.to_integer(freq),
-          value: elem(Float.parse(measurement), 0)
+          value: elem(Float.parse(measurement), 0),
+          rf_data_set_id: parent.id,
+          inserted_at: DateTime.utc_now(),
+          updated_at: DateTime.utc_now()
         }
 
-        changeset = RFData.change_rf_measurement(%RFMeasurement{}, measurement)
-
-        i = i + 1
-
-        multi =
-          Ecto.Multi.insert(
-            multi,
-            {:rf_measurement, parent.id, type, i},
-            changeset
-          )
-
-        {multi, i}
+        [measurement | list]
       end)
 
-    multi
+    Ecto.Multi.insert_all(multi, {:rf_measurement, type, file}, "rf_measurements", measurements)
   end
 
   def handle_async(:processing_files, {:ok, _}, socket) do
