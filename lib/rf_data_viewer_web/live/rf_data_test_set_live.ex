@@ -51,6 +51,8 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
       upload_progress: 0,
       manifest_file: nil,
       status: nil,
+      files_to_process: 0,
+      process_progress: 0,
       processing: false,
       temp_dir: nil
     )
@@ -210,7 +212,7 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
 
     socket =
       if socket.assigns.upload_count > 0,
-        do: assign(socket, :status, "Uploading and processing files..."),
+        do: assign(socket, :status, "Uploading files..."),
         else: socket
 
     {:noreply, socket}
@@ -220,18 +222,15 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
     valid_uploads = socket.assigns.upload_count - socket.assigns.upload_errors
 
     socket =
-      assign(
-        socket,
-        :upload_progress,
-        (socket.assigns.uploaded / valid_uploads * 100)
-        |> Float.round(2)
-      )
-
-    socket =
       if entry.done? do
+        upload_progress =
+          (socket.assigns.uploaded / valid_uploads * 100)
+          |> Float.round(2)
+
         socket =
           socket
           |> assign(:uploaded, socket.assigns.uploaded + 1)
+          |> assign(:upload_progress, upload_progress)
           |> assign(:files, socket.assigns.files ++ [entry.client_name])
 
         case entry.client_name do
@@ -320,12 +319,19 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
       case length(uploaded_files) do
         ^valid_uploads ->
           # manifest file is good and all valid uploads successful
+          live_view_pid = self()
+
+          files_to_process = length(manifest_data) * 2
+
           socket
-          |> assign(:processing, true)
           |> assign(:status, "Processing files...")
+          |> assign(:files_to_process, files_to_process)
+          |> assign(:process_progress, 0)
+          |> assign(:upload_progress, 0)
+          |> assign(:processing, true)
           |> assign(:temp_dir, dest_dir)
           |> start_async(:processing_files, fn ->
-            process_files!(test_set_id, data, dest_dir)
+            process_files!(live_view_pid, test_set_id, data, dest_dir)
           end)
 
         _ ->
@@ -346,12 +352,12 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
     end
   end
 
-  defp process_files!(test_set_id, manifest_data, dir) do
-    Enum.each(manifest_data, &build_queries(&1, test_set_id, dir))
+  defp process_files!(live_view_pid, test_set_id, manifest_data, dir) do
+    Enum.each(manifest_data, &build_queries(&1, live_view_pid, test_set_id, dir))
     :ok
   end
 
-  defp build_queries(row, test_set_id, dir) do
+  defp build_queries(row, live_view_pid, test_set_id, dir) do
     data = %{
       rf_test_set_id: test_set_id,
       name: row.test_name,
@@ -367,30 +373,64 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
       Ecto.Multi.insert(multi, :rf_data_set, changeset)
       |> Ecto.Multi.merge(fn %{rf_data_set: parent} ->
         [{"gain", row.gain_file}, {"vswr", row.vswr_file}]
-        |> Enum.reduce(multi, &build_measurement_queries(&1, &2, dir, parent))
+        |> Enum.reduce(multi, &build_measurement_queries(&1, &2, live_view_pid, dir, parent))
       end)
+
+    send(live_view_pid, {:file_processed, 2})
 
     Repo.transaction(multi)
   end
 
-  def build_measurement_queries({type, file}, multi, dir, parent) do
-    # {multi, _} =
-    measurements =
-      read_csv_file(Path.join(dir, file))
-      |> Enum.reduce([], fn {freq, measurement}, list ->
-        measurement = %{
-          type: type,
-          frequency: String.to_integer(freq),
-          value: elem(Float.parse(measurement), 0),
-          rf_data_set_id: parent.id,
-          inserted_at: DateTime.utc_now(),
-          updated_at: DateTime.utc_now()
-        }
+  def build_measurement_queries({type, file}, multi, _live_view_pid, dir, parent) do
+    file_path = Path.join(dir, file)
 
-        [measurement | list]
-      end)
+    multi =
+      if File.exists?(file_path) do
+        measurements =
+          read_csv_file(file_path)
+          |> Enum.reduce([], fn {freq, measurement}, list ->
+            measurement = %{
+              type: type,
+              frequency: String.to_integer(freq),
+              value: elem(Float.parse(measurement), 0),
+              rf_data_set_id: parent.id,
+              inserted_at: DateTime.utc_now(),
+              updated_at: DateTime.utc_now()
+            }
 
-    Ecto.Multi.insert_all(multi, {:rf_measurement, type, file}, "rf_measurements", measurements)
+            [measurement | list]
+          end)
+
+        Ecto.Multi.insert_all(
+          multi,
+          {:rf_measurement, type, file},
+          "rf_measurements",
+          measurements
+        )
+      else
+        multi
+      end
+
+    # can't send from inside an Ecto.Multi.merge callback...
+    # send(live_view_pid, :file_processed)
+
+    multi
+  end
+
+  def handle_info({:file_processed, processed}, socket) do
+    files_processed =
+      socket.assigns.process_progress + processed
+
+    progress =
+      (files_processed / socket.assigns.files_to_process * 100)
+      |> Float.round(2)
+
+    socket =
+      socket
+      |> assign(:process_progress, files_processed)
+      |> assign(:upload_progress, progress)
+
+    {:noreply, socket}
   end
 
   def handle_async(:processing_files, {:ok, _}, socket) do

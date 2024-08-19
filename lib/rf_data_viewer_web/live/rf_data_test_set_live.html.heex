@@ -172,8 +172,8 @@
       </div>
     </form>
     
-    <p class={@processing && "hidden"}>
-      Upload Progress: <progress max="100" value={@upload_progress} /> <%= @upload_progress %>%
+    <p :if={@status}>
+      Progress: <progress max="100" value={@upload_progress} /> <%= @upload_progress %>%
     </p>
   </div>
 </div>
