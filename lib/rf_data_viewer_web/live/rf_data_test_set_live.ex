@@ -21,13 +21,9 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
 
     socket =
       socket
-      |> assign(
-        test_set: ts,
-        data_set_count: ds_count,
-        data_count: data_count
-      )
-      |> init_upload()
+      |> assign_test_set_metadata(ts, ds_count, data_count)
       |> assign_data_set_list(user, ts_id)
+      |> init_upload()
       |> assign(:check_errors, false)
       |> assign(:delete_data, [])
       |> assign_modal_id("")
@@ -37,6 +33,14 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
 
     {:ok, socket}
   end
+
+  defp assign_test_set_metadata(socket, test_set, data_set_count, data_count),
+    do:
+      assign(socket,
+        test_set: test_set,
+        data_set_count: data_set_count,
+        data_count: data_count
+      )
 
   defp init_upload(socket) do
     socket
@@ -57,7 +61,7 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
       # 500 files plus a manifest file. users with junky directories can just clean their stuff up!
       max_entries: 501,
       # 1 MB max file size
-      max_file_size: 1_000_000_000_000,
+      max_file_size: 1_000_000,
       auto_upload: true,
       progress: &handle_progress/3
     )
@@ -114,8 +118,12 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
 
     case RFData.delete_rf_data_set(ds_struct) do
       {:ok, ds} ->
+        {ts, ds_count, data_count} =
+          RFDataViewer.RFData.get_rf_test_set_with_count!(ds.rf_test_set_id)
+
         {:noreply,
          socket
+         |> assign_test_set_metadata(ts, ds_count, data_count)
          |> assign_data_set_list(user, ds.rf_test_set_id)
          |> assign_edit_ds(%RFDataSet{})
          |> push_close_modal("delete-ds")}
@@ -155,29 +163,21 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
       end
 
     case response do
-      {:ok, ds} ->
-        # match map format of :data_sets data
-        ds_data = %{
-          "data" => ds,
-          "gain_count" => 0,
-          "vswr_count" => 0,
-          "local_datetime" => Users.convert_time_to_user_time(user, ds.date)
-        }
-
+      {:ok, _} ->
         empty_ds = %RFDataSet{}
         empty_changeset = RFData.change_rf_data_set(empty_ds)
 
-        # currently adding new data set to head of list... for updates, just re-query.
-        socket =
-          if is_nil(edit_ds.id),
-            do: update(socket, :data_sets, fn sets -> [ds_data | sets] end),
-            else: assign_data_set_list(socket, user, ts.id)
+        {ts, ds_count, data_count} = RFDataViewer.RFData.get_rf_test_set_with_count!(ts.id)
 
-        {:noreply,
+        socket =
          socket
+          |> assign_test_set_metadata(ts, ds_count, data_count)
+          |> assign_data_set_list(user, ts.id)
          |> assign_edit_ds(empty_ds)
          |> assign_form(empty_changeset)
-         |> push_close_modal("ds-form-container")}
+          |> push_close_modal("ds-form-container")
+
+        {:noreply, socket}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, socket |> assign(check_errors: true) |> assign_form(changeset)}
@@ -439,11 +439,17 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
   def handle_async(:processing_files, {:ok, _}, socket) do
     File.rm_rf!(socket.assigns.temp_dir)
 
+    {ts, ds_count, data_count} =
+      RFDataViewer.RFData.get_rf_test_set_with_count!(socket.assigns.test_set.id)
+
     socket =
       socket
+      |> assign_test_set_metadata(ts, ds_count, data_count)
+      |> assign_data_set_list(socket.assigns.current_user, ts.id)
       |> assign(:temp_dir, nil)
       |> assign(:processing, false)
       |> init_upload()
+      |> assign_data_set_list(socket.assigns.current_user, socket.assigns.test_set.id)
       |> put_flash(:info, "Processed uploaded data!")
 
     {:noreply, socket}
