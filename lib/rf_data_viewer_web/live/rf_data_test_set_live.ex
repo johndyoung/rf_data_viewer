@@ -286,8 +286,11 @@ defmodule RFDataViewerWeb.RFDataTestSetLive do
 
   defp process_uploads(socket) do
     # copy all data to temp directory  and then spawn process to... process the data.
-    dest_dir =
-      Path.join(Application.app_dir(:rf_data_viewer, "priv/static/uploads"), UUID.uuid1())
+    upload_dir = Application.app_dir(:rf_data_viewer, "priv/static/uploads")
+
+    if not File.exists?(upload_dir), do: File.mkdir!(upload_dir)
+
+    dest_dir = Path.join(upload_dir, UUID.uuid1())
 
     File.mkdir!(dest_dir)
 

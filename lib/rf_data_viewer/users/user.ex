@@ -51,7 +51,7 @@ defmodule RFDataViewer.Users.User do
     |> maybe_validate_unique_email(opts)
   end
 
-  defp validate_password(changeset, opts) do
+    defp validate_password(changeset, opts) do
     changeset
     |> validate_required([:password])
     |> validate_length(:password, min: 4, max: 72)
